@@ -1,0 +1,56 @@
+{
+  "name": "Highlight DQ Rules",
+  "description": "Module that highlights the DQ rule errors when reviewing data",
+  "namespace": "CCTC\\HighlightDQRulesModule",
+  "framework-version": 14,
+  "authors": [
+    {
+      "name": "Richard Hardy",
+      "email": "rmh54@cam.ac.uk",
+      "institution": "University of Cambridge - Cambridge Cancer Trials Centre"
+    }
+  ],
+
+  "links": {
+  },
+  "system-settings": [
+  ],
+  "project-settings": [
+    {
+      "key": "user-roles-can-view",
+      "name": "A role that can view the highlight DQ rule errors",
+      "type": "user-role-list",
+      "repeatable": true,
+      "required": true,
+      "super-users-only": true
+    },
+    {
+      "key": "highlight-dq-inline",
+      "name": "When checked, shows the data quality rule error in line with the question",
+      "type": "checkbox",
+      "required": false,
+      "super-users-only": true
+    },
+    {
+      "key": "dont-show-excluded-table",
+      "name": "When checked, the excluded rules are not shown in a table below the errored rules",
+      "type": "checkbox",
+      "required": false,
+      "super-users-only": true
+    },
+    {
+      "key": "dont-reset-field-data-icon",
+      "name": "When checked, the data status icon is not replaced with the standard grey icon",
+      "type": "checkbox",
+      "required": false,
+      "super-users-only": true
+    }
+  ],
+
+  "compatibility": {
+    "php-version-min": "8.0.27",
+    "php-version-max": "",
+    "redcap-version-min": "13.8.1",
+    "redcap-version-max": ""
+  }
+}
