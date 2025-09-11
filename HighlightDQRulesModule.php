@@ -140,7 +140,8 @@ class HighlightDQRulesModule extends AbstractExternalModule
                         let matches = dq.match(/\[(.*?)\]/g);
 
                         matches.forEach(function(match) {
-                            let cleaned = match.substring(1, match.length - 1);
+                            // remove leading digits to ensure valid CSS selector
+                            let cleaned = match.substring(1, match.length - 1).replace(/^\d+/, '');
                             let selector = '#' + cleaned + '-tr';
 
                             let ele = document.querySelector(selector);
