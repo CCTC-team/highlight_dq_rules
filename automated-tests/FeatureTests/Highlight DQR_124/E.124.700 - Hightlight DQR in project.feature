@@ -15,19 +15,19 @@ Feature: E.124.700 - The system shall support the ability to view data quality e
 
     Given I click on the link labeled exactly "Manage"
     Then I should see "External Modules - Module Manager"
-    And I should NOT see "Highlight DQ Rules - v0.0.0"
+    And I should NOT see "Highlight DQ Rules - v1.0.0"
     When I click on the button labeled "Enable a module"
     And I click on the button labeled Enable for the external module named "Highlight DQ Rules"
     And I click on the button labeled "Enable" in the dialog box
-    Then I should see "Highlight DQ Rules - v0.0.0"
+    Then I should see "Highlight DQ Rules - v1.0.0"
  
   Scenario: Enable external module in project
     Given I create a new project named "E.124.700" by clicking on "New Project" in the menu bar, selecting "Practice / Just for fun" from the dropdown, choosing file "redcap_val/Project_redcap_val_nodata.xml", and clicking the "Create Project" button
     And I click on the link labeled exactly "Manage"
     Then I should see "External Modules - Project Module Manager"
     When I click on the button labeled "Enable a module"
-    And I click on the button labeled Enable for the external module named "Highlight DQ Rules - v0.0.0"
-    Then I should see "Highlight DQ Rules - v0.0.0"
+    And I click on the button labeled Enable for the external module named "Highlight DQ Rules - v1.0.0"
+    Then I should see "Highlight DQ Rules - v1.0.0"
 
     # Configure external Module
     Given I click on the button labeled "Configure"
@@ -36,7 +36,7 @@ Feature: E.124.700 - The system shall support the ability to view data quality e
     And I click on the button labeled "+" in the dialog box
     When I select "Monitor" on the dropdown field labeled "2. A role that can view the highlight DQ rule errors"
     Then I click on the button labeled "Save" in the dialog box
-    Then I should see "Highlight DQ Rules - v0.0.0"
+    Then I should see "Highlight DQ Rules - v1.0.0"
 
     # Add User Test_User1 with 'Project Setup & Design' rights
     Given I click on the link labeled "User Rights"
@@ -130,7 +130,7 @@ Feature: E.124.700 - The system shall support the ability to view data quality e
     Then I should see "Configure Module"
     And I check the checkbox labeled "When checked, shows the data quality rule error in line with the question" in the dialog box
     When I click on the button labeled "Save" in the dialog box
-    Then I should see "Highlight DQ Rules - v0.0.0"
+    Then I should see "Highlight DQ Rules - v1.0.0"
     And I logout
 
   Scenario: E.124.1000, E.124.1100 - Highlight DQ Rules for Repeating Events in Arm 2
@@ -191,7 +191,7 @@ Feature: E.124.700 - The system shall support the ability to view data quality e
     And I should NOT see "A role that can view the highlight DQ rule errors" in the dialog box
     And I should NOT see "When checked, shows the data quality rule error in line with the question" in the dialog box
     When I click on the button labeled "Cancel" in the dialog box
-    Then I should see "Highlight DQ Rules - v0.0.0"
+    Then I should see "Highlight DQ Rules - v1.0.0"
     And I should see "Currently Enabled Modules"
 
     Given I click on the link labeled "Record Status Dashboard"
@@ -228,19 +228,19 @@ Feature: E.124.700 - The system shall support the ability to view data quality e
     And I click on the link labeled "E.124.700"
     And I click on the link labeled exactly "Manage"
     Then I should see "External Modules - Project Module Manager"
-    And I should see "Highlight DQ Rules - v0.0.0"
+    And I should see "Highlight DQ Rules - v1.0.0"
     When I click on the button labeled exactly "Disable"
     Then I should see "Disable module?" in the dialog box
     When I click on the button labeled "Disable module" in the dialog box
-    Then I should NOT see "Highlight DQ Rules - v0.0.0"
+    Then I should NOT see "Highlight DQ Rules - v1.0.0"
 
     Given I click on the link labeled "Logging"
     Then I should see a table header and row containing the following values in the logging table:
       | Time / Date      | Username   | Action                                                                           | List of Data Changes OR Fields Exported                                                 |
-      | mm/dd/yyyy hh:mm | test_admin | Disable external module "highlight_dq_rules_v0.0.0" for project                  |                                                                                         |
-      | mm/dd/yyyy hh:mm | test_admin | Modify configuration for external module "highlight_dq_rules_v0.0.0" for project | highlight-dq-inline                                                                     |
-      | mm/dd/yyyy hh:mm | test_admin | Modify configuration for external module "highlight_dq_rules_v0.0.0" for project | reserved-hide-from-non-admins-in-project-list, user-roles-can-view, highlight-dq-inline |
-      | mm/dd/yyyy hh:mm | test_admin | Enable external module "highlight_dq_rules_v0.0.0" for project                   |                                                                                         |
+      | mm/dd/yyyy hh:mm | test_admin | Disable external module "highlight_dq_rules_v1.0.0" for project                  |                                                                                         |
+      | mm/dd/yyyy hh:mm | test_admin | Modify configuration for external module "highlight_dq_rules_v1.0.0" for project | highlight-dq-inline                                                                     |
+      | mm/dd/yyyy hh:mm | test_admin | Modify configuration for external module "highlight_dq_rules_v1.0.0" for project | reserved-hide-from-non-admins-in-project-list, user-roles-can-view, highlight-dq-inline |
+      | mm/dd/yyyy hh:mm | test_admin | Enable external module "highlight_dq_rules_v1.0.0" for project                   |                                                                                         |
 
     # Disable external module in Control Center
     Given I click on the link labeled "Control Center"
@@ -248,7 +248,7 @@ Feature: E.124.700 - The system shall support the ability to view data quality e
     And I click on the button labeled exactly "Disable"
     Then I should see "Disable module?" in the dialog box
     When I click on the button labeled "Disable module" in the dialog box
-    Then I should NOT see "Highlight DQ Rules - v0.0.0"
+    Then I should NOT see "Highlight DQ Rules - v1.0.0"
 
     # Not checking 'Delete Version' for now as this is used for deleting lower versions.
     # If the entire EM is deleted REDCap throws an error
@@ -256,11 +256,11 @@ Feature: E.124.700 - The system shall support the ability to view data quality e
     Given I click on the link labeled "User Activity Log"
     Then I should see a table header and row containing the following values in a table:
       | Time             | User       | Event                                                                            |
-      | mm/dd/yyyy hh:mm | test_admin | Disable external module "highlight_dq_rules_v0.0.0" for system                   |
-      | mm/dd/yyyy hh:mm | test_admin | Disable external module "highlight_dq_rules_v0.0.0" for project                  |
-      | mm/dd/yyyy hh:mm | test_admin | Modify configuration for external module "highlight_dq_rules_v0.0.0" for project |
-      | mm/dd/yyyy hh:mm | test_admin | Enable external module "highlight_dq_rules_v0.0.0" for project                   |
-      | mm/dd/yyyy hh:mm | test_admin | Enable external module "highlight_dq_rules_v0.0.0" for system                    |
+      | mm/dd/yyyy hh:mm | test_admin | Disable external module "highlight_dq_rules_v1.0.0" for system                   |
+      | mm/dd/yyyy hh:mm | test_admin | Disable external module "highlight_dq_rules_v1.0.0" for project                  |
+      | mm/dd/yyyy hh:mm | test_admin | Modify configuration for external module "highlight_dq_rules_v1.0.0" for project |
+      | mm/dd/yyyy hh:mm | test_admin | Enable external module "highlight_dq_rules_v1.0.0" for project                   |
+      | mm/dd/yyyy hh:mm | test_admin | Enable external module "highlight_dq_rules_v1.0.0" for system                    |
 
     And I logout
 
