@@ -11,3 +11,4 @@ E.124.1000 - The system shall support the ability to use Highlight DQ Rules exte
 E.124.1100 - The system shall support the ability to use Highlight DQ Rules external module for Repeating Events/Instruments.
 E.124.1200 - The system shall support the ability to view excluded data in instruments based on user roles using Highlight DQ Rules external module.
 E.124.1300 - The system shall support the ability to view excluded data quality rules in instruments based on user roles using Highlight DQ Rules external module.
+E.124.1400 - The system shall support the ability to configure 'Module configuration permissions in projects' for Highlight DQ Rules external module.
