@@ -44,6 +44,13 @@
       "type": "checkbox",
       "required": false,
       "super-users-only": true
+    },
+    {
+      "key": "auto-unexclude-on-change",
+      "name": "When checked, excluded DQ rules will be automatically un-excluded when their associated fields are modified",
+      "type": "checkbox",
+      "required": false,
+      "super-users-only": true
     }
   ],
 
@@ -51,6 +58,6 @@
     "php-version-min": "8.0.27",
     "php-version-max": "8.2.29",
     "redcap-version-min": "13.8.1",
-    "redcap-version-max": "14.7.0"
+    "redcap-version-max": "16.0.6"
   }
 }
