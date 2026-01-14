@@ -12,11 +12,9 @@ class HighlightDQRulesModule extends AbstractExternalModule
 {
     //potential improvement: some of the logic (a lot!) could be rewritten to use the inbuilt methods
     //leaving as is for now as it works
-
-
     const DataEntryFilePath = APP_PATH_DOCROOT . "/Classes/DataEntry.php";
     const DataEntryCode =
-        '//****** inserted by Monitoring QR module ******
+        '//****** inserted by Highlight DQ Rules module ******
         Hooks::call(\'redcap_save_record_highlight_dqr\', array($field_values_changed, PROJECT_ID, $fetched, $_GET[\'page\'], $_GET[\'event_id\'], $group_id, ($isSurveyPage ? $_GET[\'s\'] : null), $response_id, $_GET[\'instance\']));
         //****** end of insert ******' . PHP_EOL;
     const DataEntrySearchTerm = '            if (!is_numeric($group_id)) $group_id = null;
@@ -168,7 +166,9 @@ class HighlightDQRulesModule extends AbstractExternalModule
 
     public function redcap_data_entry_form($project_id, $record, $instrument, $event_id, $group_id, $repeat_instance)
     {
-        
+        global $data_resolution_enabled;
+        echo "DEBUG: data_resolution_enabled = '$data_resolution_enabled'";
+
         if (empty($project_id)) return;
 
         global $Proj;
@@ -450,17 +450,6 @@ class HighlightDQRulesModule extends AbstractExternalModule
                                    $repeat_instance, $instrument);
     }
 
-    /**
-     * Auto-un-excludes DQRs when their associated fields are modified
-     *
-     * @param int $project_id Project ID
-     * @param string $record Record ID
-     * @param int $event_id Event ID
-     * @param array $changed_fields Array of field names that were changed
-     * @param int $repeat_instance Repeat instance (0 if not repeating)
-     * @param string $repeat_instrument Repeating instrument name (empty if not repeating)
-     * @return int Number of rules un-excluded
-     */
     private function autoUnexcludeRules($project_id, $record, $event_id, $changed_fields,
                                         $repeat_instance = 0, $repeat_instrument = "")
     {
@@ -485,7 +474,7 @@ class HighlightDQRulesModule extends AbstractExternalModule
             // Data Query Resolution mode
             $sql .= " AND dqs.query_status IN ('CLOSED', 'VERIFIED')";
         } else if ($data_resolution_enabled == '1') {
-            // Old exclude mode
+            // Field comments mode
             $sql .= " AND dqs.exclude = 1";
         }
 
@@ -542,7 +531,7 @@ class HighlightDQRulesModule extends AbstractExternalModule
                         VALUES (?, ?, ?, 'DEVERIFIED', NULL)";
                 db_query($sql, [$status_id, NOW, $user_id]);
             } else if ($data_resolution_enabled == '1') {
-                // Old mode: set exclude = 0
+                // Field comments mode: set exclude = 0
                 $sql = "UPDATE redcap_data_quality_status
                         SET exclude = 0
                         WHERE status_id = ?";
