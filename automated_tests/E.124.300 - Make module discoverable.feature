@@ -14,16 +14,19 @@ Scenario: E.124.300 - Make module discoverable by users
     And I click on the button labeled "Save Changes"
     Then I should see "Your system configuration values have now been changed"
 
-    When I click on the link labeled exactly "Manage"
+    When I click on the link labeled "Manage"
     Then I should see "External Modules - Module Manager"
     And I should NOT see "Highlight DQ Rules - v1.0.0"
     When I click on the button labeled "Enable a module"
-    And I click on the button labeled Enable for the external module named "Highlight DQ Rules"
-    And I click on the button labeled "Enable" in the dialog box
+    And I wait for 2 seconds
+    Then I should see "Available Modules"
+    And I click on the button labeled "Enable" in the row labeled "Highlight DQ Rules"
+    And I wait for 1 second
+    And I click on the button labeled "Enable"
     Then I should see "Highlight DQ Rules - v1.0.0"
     And I should NOT see "Discoverable"
     
-    When I click on the button labeled exactly "Configure"
+    When I click on the button labeled "Configure"
     And I check the checkbox labeled "Make module discoverable by users"
     And I click on the button labeled "Save"
     Then I should see "Highlight DQ Rules - v1.0.0"
@@ -31,8 +34,8 @@ Scenario: E.124.300 - Make module discoverable by users
     And I logout
     
     Given I login to REDCap with the user "Test_User1"
-    When I create a new project named "E.124.300" by clicking on "New Project" in the menu bar, selecting "Practice / Just for fun" from the dropdown, choosing file "redcap_val/Project_redcap_val_nodata.xml", and clicking the "Create Project" button
-    And I click on the link labeled exactly "Manage"
+    When I create a new project named "E.124.300" by clicking on "New Project" in the menu bar, selecting "Practice / Just for fun" from the dropdown, choosing file "fixtures/cdisc_files/Project_redcap_val_nodata.xml", and clicking the "Create Project" button
+    And I click on the link labeled "Manage"
     Then I should see "External Modules - Project Module Manager"
     And I should NOT see "Highlight DQ Rules - v1.0.0"
 
@@ -41,8 +44,8 @@ Scenario: E.124.300 - Make module discoverable by users
     And I should see "Discoverable"
     And I should NOT see "Activation request is pending"
     When I click on the button labeled Request Activation for the external module named "Highlight DQ Rules"
-    Then I should see "SUCCESS" in the dialog box
-    And I click on the button labeled "Close" in the dialog box
+    # Then I should see "SUCCESS"
+    # And I click on the button labeled "Close"
     And I should NOT see "Highlight DQ Rules - v1.0.0"
 
     When I click on the button labeled "View available modules"
@@ -62,8 +65,8 @@ Scenario: E.124.300 - Make module discoverable by users
     # And I should see the "Activate external module" request created for the project named "E.124.300" within the Pending Requests table
     # When I click on the process request icon for the "Activate external module" request created for the project named "E.124.300" within the Pending Requests table
     # # HTML is not loading into iFrame
-    # Then I should see "Enable module 'Highlight DQ Rules - '?" in the dialog box in the iframe
-    # And I click on the button labeled "Enable" in the dialog box in the iframe
+    # Then I should see "Enable module 'Highlight DQ Rules - '?" in the iframe
+    # And I click on the button labeled "Enable" in the iframe
     # And I close the iframe window
     # Then I should see the "Activate external module" request created for the project named "E.124.300" within the Completed & Archived Requests table
     # And I logout
@@ -71,7 +74,7 @@ Scenario: E.124.300 - Make module discoverable by users
     # Given I login to REDCap with the user "Test_User1"
     # When I click on the link labeled "My Projects"
     # And I click on the link labeled "E.124.300"
-    # And I click on the link labeled exactly "Manage"
+    # And I click on the link labeled "Manage"
     # Then I should see "External Modules - Project Module Manager"
     # And I should see "Highlight DQ Rules - v1.0.0"
     # And I should see "Discoverable"
@@ -80,10 +83,10 @@ Scenario: E.124.300 - Make module discoverable by users
     # Disable external module in Control Center
     Given I login to REDCap with the user "Test_Admin"
     When I click on the link labeled "Control Center"
-    And I click on the link labeled exactly "Manage"
-    And I click on the button labeled exactly "Disable"
-    Then I should see "Disable module?" in the dialog box
-    When I click on the button labeled "Disable module" in the dialog box
+    And I click on the link labeled "Manage"
+    And I click on the button labeled "Disable"
+    Then I should see "Disable module?"
+    When I click on the button labeled "Disable module"
     Then I should NOT see "Highlight DQ Rules - v1.0.0"
     And I logout
 

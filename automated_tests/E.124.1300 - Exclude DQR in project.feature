@@ -13,16 +13,19 @@ Feature: E.124.1300 - The system shall support the ability to view excluded data
     And I click on the button labeled "Save Changes"
     Then I should see "Your system configuration values have now been changed"
 
-    Given I click on the link labeled exactly "Manage"
+    Given I click on the link labeled "Manage"
     Then I should see "External Modules - Module Manager"
     And I should NOT see "Highlight DQ Rules - v1.0.0"
     When I click on the button labeled "Enable a module"
-    And I click on the button labeled Enable for the external module named "Highlight DQ Rules"
-    And I click on the button labeled "Enable" in the dialog box
+    And I wait for 2 seconds
+    Then I should see "Available Modules"
+    And I click on the button labeled "Enable" in the row labeled "Highlight DQ Rules"
+    And I wait for 1 second
+    And I click on the button labeled "Enable"
     Then I should see "Highlight DQ Rules - v1.0.0"
  
   Scenario: Enable external module in project
-    Given I create a new project named "E.124.1200" by clicking on "New Project" in the menu bar, selecting "Practice / Just for fun" from the dropdown, choosing file "redcap_val/E1241200.xml", and clicking the "Create Project" button
+    Given I create a new project named "E.124.1200" by clicking on "New Project" in the menu bar, selecting "Practice / Just for fun" from the dropdown, choosing file "fixtures/cdisc_files/E1241200.xml", and clicking the "Create Project" button
 
     #ACTION: Enable the Data Resolution Workflow
     Given I click on the link labeled "Project Setup"
@@ -32,21 +35,21 @@ Feature: E.124.1300 - The system shall support the ability to view excluded data
     And I check the checkbox labeled "Hide closed/verified data queries from Data Quality results (for Data Resolution Workflow only)"
     Then I click on the button labeled "Save"
     Then I should see "The Data Resolution Workflow has now been enabled!"
-    And I click on the button labeled "Close" in the dialog box
+    And I click on the button labeled "Close"
 
-    Given I click on the link labeled exactly "Manage"
+    Given I click on the link labeled "Manage"
     Then I should see "External Modules - Project Module Manager"
     When I click on the button labeled "Enable a module"
-    And I click on the button labeled Enable for the external module named "Highlight DQ Rules - v1.0.0"
+    And I click on the button labeled "Enable" in the row labeled "Highlight DQ Rules - v1.0.0"
     Then I should see "Highlight DQ Rules - v1.0.0"
 
     # Configure external Module
     Given I click on the button labeled "Configure"
-    Then I should see "Configure Module" in the dialog box
+    Then I should see "Configure Module"
     When I select "DataManager" on the dropdown field labeled "1. A role that can view the highlight DQ rule errors"
-    And I click on the button labeled "+" in the dialog box
+    And I click on the button labeled "+"
     When I select "Monitor" on the dropdown field labeled "2. A role that can view the highlight DQ rule errors"
-    Then I click on the button labeled "Save" in the dialog box
+    Then I click on the button labeled "Save"
     Then I should see "Highlight DQ Rules - v1.0.0"
 
     # Add User Test_User2 to DataManager user role
@@ -54,7 +57,7 @@ Feature: E.124.1300 - The system shall support the ability to view excluded data
     When I enter "Test_User2" into the field with the placeholder text of "Assign new user to role"
     And I click on the button labeled "Assign to role"
     And I select "DataManager" on the dropdown field labeled "Select Role" on the role selector dropdown
-    And I click on the button labeled exactly "Assign" on the role selector dropdown
+    And I click on the button labeled "Assign"
     Then I should see "Test User2" within the "DataManager" row of the column labeled "Username" of the User Rights table
     And I logout
 
@@ -80,28 +83,28 @@ Feature: E.124.1300 - The system shall support the ability to view excluded data
 
     # Verify DQR
     Given I click on the link labeled "Data Quality"
-    And I click on the button labeled exactly "All"
+    And I click on the button labeled "All"
     Then I should see a table header and rows containing the following values in a table:
-      | Rule # | Rule Name              | Rule Logic (Show discrepancy only if...)                    | Total Discrepancies |
+      | Rule # | Rule Name              | Rule Logic                                                  | Total Discrepancies |
       | 1      | Identifier more than 8 | [identifier] > 8                                            | 5                   |
       | 2      | Name not Name1         | [ptname] != 'Name1'                                         | 8                   |
       | 3      | Names are different    | [event_2_arm_1][ptname_v2_v2] != [event_2_arm_1][ptname]    | 1                   |
 
-    When I click on the "view" link for Data Quality Rule # "3"
-    Then I should see "Rule #3: Names are different" in the dialog box
-    And I should see "Discrepancies found: 1" in the dialog box
-    And I click on the button labeled "comments" in the dialog box
+    When I click on the link labeled "view" in the row labeled "3"
+    Then I should see "Rule #3: Names are different"
+    And I should see "Discrepancies found: 1"
+    And I click on the button labeled "comments"
     When I select the radio option Verified data value in Data Resolution Workflow
     And I enter "Verify DQR" in the comment box in Data Resolution Workflow
-    And I click on the button labeled "Verified data value" in the dialog box
+    And I click on the button labeled "Verified data value"
     And I wait for 1 second
     Then I should NOT see "Data Resolution Workflow"
     And I click on the button labeled "Close"
     Then I should see "[event_2_arm_1][ptname_v2_v2] != [event_2_arm_1][ptname]"
     When I click on the button labeled "Clear"
-    And I click on the button labeled exactly "All"
+    And I click on the button labeled "All"
     Then I should see a table header and rows containing the following values in a table:
-      | Rule # | Rule Name              | Rule Logic (Show discrepancy only if...)                    | Total Discrepancies |
+      | Rule # | Rule Name              | Rule Logic                                                  | Total Discrepancies |
       | 1      | Identifier more than 8 | [identifier] > 8                                            | 5                   |
       | 2      | Name not Name1         | [ptname] != 'Name1'                                         | 8                   |
       | 3      | Names are different    | [event_2_arm_1][ptname_v2_v2] != [event_2_arm_1][ptname]    | 1                   |
@@ -129,12 +132,12 @@ Feature: E.124.1300 - The system shall support the ability to view excluded data
     When I click on the link labeled "My Projects"
     And I click on the link labeled "E.124.1200"
     Then I should see "Project Home and Design"
-    When I click on the link labeled exactly "Manage"
+    When I click on the link labeled "Manage"
     Then I should see "External Modules - Project Module Manager"
     And I click on the button labeled "Configure"
     Then I should see "Configure Module"
-    And I check the checkbox labeled "When checked, the excluded rules are not shown in a table below the errored rules" in the dialog box
-    When I click on the button labeled "Save" in the dialog box
+    And I check the checkbox labeled "When checked, the excluded rules are not shown in a table below the errored rules"
+    When I click on the button labeled "Save"
     Then I should see "Highlight DQ Rules - v1.0.0"
     And I logout
 
@@ -163,12 +166,12 @@ Feature: E.124.1300 - The system shall support the ability to view excluded data
     When I click on the link labeled "My Projects"
     And I click on the link labeled "E.124.1200"
     Then I should see "Project Home and Design"
-    When I click on the link labeled exactly "Manage"
+    When I click on the link labeled "Manage"
     Then I should see "External Modules - Project Module Manager"
     And I click on the button labeled "Configure"
     Then I should see "Configure Module"
-    And I uncheck the checkbox labeled "When checked, the excluded rules are not shown in a table below the errored rules" in the dialog box
-    When I click on the button labeled "Save" in the dialog box
+    And I uncheck the checkbox labeled "When checked, the excluded rules are not shown in a table below the errored rules"
+    When I click on the button labeled "Save"
     Then I should see "Highlight DQ Rules - v1.0.0"
     And I logout
 
@@ -177,30 +180,30 @@ Feature: E.124.1300 - The system shall support the ability to view excluded data
     When I click on the link labeled "My Projects"
     And I click on the link labeled "E.124.1200"
     Given I click on the link labeled "Data Quality"
-    And I click on the button labeled exactly "All"
+    And I click on the button labeled "All"
     Then I should see a table header and rows containing the following values in a table:
-      | Rule # | Rule Name              | Rule Logic (Show discrepancy only if...)                    | Total Discrepancies |
+      | Rule # | Rule Name              | Rule Logic                                                  | Total Discrepancies |
       | 1      | Identifier more than 8 | [identifier] > 8                                            | 5                   |
       | 2      | Name not Name1         | [ptname] != 'Name1'                                         | 8                   |
       | 3      | Names are different    | [event_2_arm_1][ptname_v2_v2] != [event_2_arm_1][ptname]    | 1                   |
 
-    When I click on the "view" link for Data Quality Rule # "3"
-    Then I should see "Rule #3: Names are different" in the dialog box
-    And I should see "1 exclusion not displayed" in the dialog box
-    And I click on the link labeled "view" in the dialog box
-    And I should see "Discrepancies found: 1" in the dialog box
-    And I click on the button labeled "comment" in the dialog box
+    When I click on the link labeled "view" in the row labeled "3"
+    Then I should see "Rule #3: Names are different"
+    And I should see "1 exclusion not displayed"
+    And I click on the link labeled "view"
+    And I should see "Discrepancies found: 1"
+    And I click on the button labeled "comment"
     When I select the radio option De-verify data value in Data Resolution Workflow
     And I enter "De-verify DQR" in the comment box in Data Resolution Workflow
-    And I click on the button labeled "De-verify data value" in the dialog box
+    And I click on the button labeled "De-verify data value"
     And I wait for 1 second
     Then I should NOT see "Data Resolution Workflow"
     And I click on the button labeled "Close"
     Then I should see "[event_2_arm_1][ptname_v2_v2] != [event_2_arm_1][ptname]"
     When I click on the button labeled "Clear"
-    And I click on the button labeled exactly "All"
+    And I click on the button labeled "All"
     Then I should see a table header and rows containing the following values in a table:
-      | Rule # | Rule Name              | Rule Logic (Show discrepancy only if...)                    | Total Discrepancies |
+      | Rule # | Rule Name              | Rule Logic                                                  | Total Discrepancies |
       | 1      | Identifier more than 8 | [identifier] > 8                                            | 5                   |
       | 2      | Name not Name1         | [ptname] != 'Name1'                                         | 8                   |
       | 3      | Names are different    | [event_2_arm_1][ptname_v2_v2] != [event_2_arm_1][ptname]    | 1                   |
@@ -223,28 +226,28 @@ Feature: E.124.1300 - The system shall support the ability to view excluded data
 
    # Re-verify DQR
     Given I click on the link labeled "Data Quality"
-    And I click on the button labeled exactly "All"
+    And I click on the button labeled "All"
     Then I should see a table header and rows containing the following values in a table:
-      | Rule # | Rule Name              | Rule Logic (Show discrepancy only if...)                    | Total Discrepancies |
+      | Rule # | Rule Name              | Rule Logic                                                  | Total Discrepancies |
       | 1      | Identifier more than 8 | [identifier] > 8                                            | 5                   |
       | 2      | Name not Name1         | [ptname] != 'Name1'                                         | 8                   |
       | 3      | Names are different    | [event_2_arm_1][ptname_v2_v2] != [event_2_arm_1][ptname]    | 1                   |
 
-    When I click on the "view" link for Data Quality Rule # "3"
-    Then I should see "Rule #3: Names are different" in the dialog box
-    And I should see "Discrepancies found: 1" in the dialog box
-    And I click on the button labeled "comments" in the dialog box
+    When I click on the link labeled "view" in the row labeled "3"
+    Then I should see "Rule #3: Names are different"
+    And I should see "Discrepancies found: 1"
+    And I click on the button labeled "comments"
     When I select the radio option Verified data value in Data Resolution Workflow
     And I enter "Re-verify DQR" in the comment box in Data Resolution Workflow
-    And I click on the button labeled "Verified data value" in the dialog box
+    And I click on the button labeled "Verified data value"
     And I wait for 1 second
     Then I should NOT see "Data Resolution Workflow"
     And I click on the button labeled "Close"
     Then I should see "[event_2_arm_1][ptname_v2_v2] != [event_2_arm_1][ptname]"
     When I click on the button labeled "Clear"
-    And I click on the button labeled exactly "All"
+    And I click on the button labeled "All"
     Then I should see a table header and rows containing the following values in a table:
-      | Rule # | Rule Name              | Rule Logic (Show discrepancy only if...)                    | Total Discrepancies |
+      | Rule # | Rule Name              | Rule Logic                                                  | Total Discrepancies |
       | 1      | Identifier more than 8 | [identifier] > 8                                            | 5                   |
       | 2      | Name not Name1         | [ptname] != 'Name1'                                         | 8                   |
       | 3      | Names are different    | [event_2_arm_1][ptname_v2_v2] != [event_2_arm_1][ptname]    | 1                   |
@@ -272,12 +275,12 @@ Feature: E.124.1300 - The system shall support the ability to view excluded data
     Given I login to REDCap with the user "Test_Admin"
     When I click on the link labeled "My Projects"
     And I click on the link labeled "E.124.1200"
-    And I click on the link labeled exactly "Manage"
+    And I click on the link labeled "Manage"
     Then I should see "External Modules - Project Module Manager"
     And I should see "Highlight DQ Rules - v1.0.0"
-    When I click on the button labeled exactly "Disable"
-    Then I should see "Disable module?" in the dialog box
-    When I click on the button labeled "Disable module" in the dialog box
+    When I click on the button labeled "Disable"
+    Then I should see "Disable module?"
+    When I click on the button labeled "Disable module"
     Then I should NOT see "Highlight DQ Rules - v1.0.0"
 
     Given I click on the link labeled "Logging"
@@ -290,10 +293,10 @@ Feature: E.124.1300 - The system shall support the ability to view excluded data
 
     # Disable external module in Control Center
     Given I click on the link labeled "Control Center"
-    When I click on the link labeled exactly "Manage"
-    And I click on the button labeled exactly "Disable"
-    Then I should see "Disable module?" in the dialog box
-    When I click on the button labeled "Disable module" in the dialog box
+    When I click on the link labeled "Manage"
+    And I click on the button labeled "Disable"
+    Then I should see "Disable module?"
+    When I click on the button labeled "Disable module"
     Then I should NOT see "Highlight DQ Rules - v1.0.0"
 
     # Not checking 'Delete Version' for now as this is used for deleting lower versions.

@@ -6,26 +6,29 @@ Feature: E.124.1400 - The system shall support the ability to configure 'Module 
 Scenario: E.124.1400 - Module configuration permissions in projects
     Given I login to REDCap with the user "Test_Admin"
     When I click on the link labeled "Control Center"
-    When I click on the link labeled exactly "Manage"
+    When I click on the link labeled "Manage"
     Then I should see "External Modules - Module Manager"
     And I should NOT see "Highlight DQ Rules - v1.0.0"
     When I click on the button labeled "Enable a module"
-    And I click on the button labeled Enable for the external module named "Highlight DQ Rules"
-    And I click on the button labeled "Enable" in the dialog box
+    And I wait for 2 seconds
+    Then I should see "Available Modules"
+    And I click on the button labeled "Enable" in the row labeled "Highlight DQ Rules"
+    And I wait for 1 second
+    And I click on the button labeled "Enable"
     Then I should see "Highlight DQ Rules - v1.0.0"
     
-    When I click on the button labeled exactly "Configure"
+    When I click on the button labeled "Configure"
     Then I should see the dropdown field labeled "Module configuration permissions in projects" with the option "Require Project Setup/Design privilege" selected
     And I click on the button labeled "Save"
     Then I should see "Highlight DQ Rules - v1.0.0"
 
-    When I create a new project named "E.124.1400" by clicking on "New Project" in the menu bar, selecting "Practice / Just for fun" from the dropdown, choosing file "redcap_val/Project_redcap_val_nodata.xml", and clicking the "Create Project" button
+    When I create a new project named "E.124.1400" by clicking on "New Project" in the menu bar, selecting "Practice / Just for fun" from the dropdown, choosing file "fixtures/cdisc_files/Project_redcap_val_nodata.xml", and clicking the "Create Project" button
 
     # Enable external module
-    And I click on the link labeled exactly "Manage"
+    And I click on the link labeled "Manage"
     Then I should see "External Modules - Project Module Manager"
     When I click on the button labeled "Enable a module"
-    And I click on the button labeled Enable for the external module named "Highlight DQ Rules - v1.0.0"
+    And I click on the button labeled "Enable" in the row labeled "Highlight DQ Rules - v1.0.0"
     Then I should see "Highlight DQ Rules - v1.0.0"
 
     #VERIFY
@@ -39,10 +42,10 @@ Scenario: E.124.1400 - Module configuration permissions in projects
 
     # Enable - Require module-specific user privilege
     When I click on the link labeled "Control Center"
-    And I click on the link labeled exactly "Manage"
+    And I click on the link labeled "Manage"
     Then I should see "External Modules - Module Manager"
     And I should see "Highlight DQ Rules - v1.0.0"
-    When I click on the button labeled exactly "Configure"
+    When I click on the button labeled "Configure"
     And I select "Require module-specific user privilege" on the dropdown field labeled "Module configuration permissions in projects"
     And I click on the button labeled "Save"
     Then I should see "Highlight DQ Rules - v1.0.0"
@@ -62,20 +65,20 @@ Scenario: E.124.1400 - Module configuration permissions in projects
 
 Scenario: E.124.600 - View Usage of the external module
     When I click on the link labeled "Control Center"
-    And I click on the link labeled exactly "Manage"
+    And I click on the link labeled "Manage"
     Then I should see "Highlight DQ Rules - v1.0.0"
     When I click on the button labeled "View Usage"
-    And I should see a link labeled "E.124.1400" in the dialog box
-    When I click on the link labeled "E.124.1400" in the dialog box
+    And I should see a link labeled "E.124.1400"
+    When I click on the link labeled "E.124.1400"
     Then I should see "Project Home"
     And I should see "E.124.1400"
 
     # Disable external module in Control Center
     When I click on the link labeled "Control Center"
-    And I click on the link labeled exactly "Manage"
-    And I click on the button labeled exactly "Disable"
-    Then I should see "Disable module?" in the dialog box
-    When I click on the button labeled "Disable module" in the dialog box
+    And I click on the link labeled "Manage"
+    And I click on the button labeled "Disable"
+    Then I should see "Disable module?"
+    When I click on the button labeled "Disable module"
     Then I should NOT see "Highlight DQ Rules - v1.0.0"
     And I logout
 
