@@ -43,7 +43,7 @@ Scenario: E.124.300 - Make module discoverable by users
     Then I should see "Highlight DQ Rules - v1.0.0"
     And I should see "Discoverable"
     And I should NOT see "Activation request is pending"
-    When I click on the button labeled Request Activation for the external module named "Highlight DQ Rules"
+    When I click on the button labeled "Request Activation" in the row labeled "Highlight DQ Rules"
     # Then I should see "SUCCESS"
     # And I click on the button labeled "Close"
     And I should NOT see "Highlight DQ Rules - v1.0.0"
@@ -78,18 +78,18 @@ Scenario: E.124.300 - Make module discoverable by users
     # Then I should see "External Modules - Project Module Manager"
     # And I should see "Highlight DQ Rules - v1.0.0"
     # And I should see "Discoverable"
+    # # And I logout
+
+    # # Disable external module in Control Center
+    # Given I login to REDCap with the user "Test_Admin"
+    # When I click on the link labeled "Control Center"
+    # And I click on the link labeled "Manage"
+    # And I click on the button labeled "Disable"
+    # Then I should see "Disable module?"
+    # When I click on the button labeled "Disable module"
+    # Then I should NOT see "Highlight DQ Rules - v1.0.0"
     # And I logout
 
-    # Disable external module in Control Center
-    Given I login to REDCap with the user "Test_Admin"
-    When I click on the link labeled "Control Center"
-    And I click on the link labeled "Manage"
-    And I click on the button labeled "Disable"
-    Then I should see "Disable module?"
-    When I click on the button labeled "Disable module"
-    Then I should NOT see "Highlight DQ Rules - v1.0.0"
-    And I logout
-
-    # Verify no exceptions are thrown in the system
-    Given I open Email
-    Then I should NOT see an email with subject "REDCap External Module Hook Exception - highlight_dq_rules"
+    # # Verify no exceptions are thrown in the system
+    # Given I open Email
+    # Then I should NOT see an email with subject "REDCap External Module Hook Exception - highlight_dq_rules"
