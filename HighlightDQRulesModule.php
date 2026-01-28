@@ -10,21 +10,6 @@ use UserRights;
 
 class HighlightDQRulesModule extends AbstractExternalModule
 {
-    //potential improvement: some of the logic (a lot!) could be rewritten to use the inbuilt methods
-    //leaving as is for now as it works
-
-    function getBaseUrl(): string
-    {
-        //returns something like https://localhost:8443/redcap_v13.8.1
-        $url = $this->getUrl("somepage.php");
-
-        //use regex to pull everything prior to the ExternalModules part
-        $basePat = "/https?:\/\/.*(?=\/ExternalModules)/";
-        preg_match($basePat, $url, $urlMatches);
-
-        return $urlMatches[0];
-    }
-
     public function validateSettings($settings): ?string
     {
         if (array_key_exists("user-roles-can-view", $settings)) {
@@ -39,9 +24,7 @@ class HighlightDQRulesModule extends AbstractExternalModule
     function MakeDQLink($projectId, $rule, $val): string
     {
         //https://localhost:8443/redcap_v13.8.1/DataQuality/index.php?pid=28#ruleorder_12
-        $baseUrl = $this->getBaseUrl();
-
-        return "<a href='{$baseUrl}/DataQuality/index.php?pid={$projectId}#{$rule}'>{$val}</a>";
+        return "<a href='" . APP_PATH_WEBROOT . "/DataQuality/index.php?pid={$projectId}#{$rule}'>{$val}</a>";
     }
 
     // queries the db for the rule details for rules with the given array of $ruleIds
