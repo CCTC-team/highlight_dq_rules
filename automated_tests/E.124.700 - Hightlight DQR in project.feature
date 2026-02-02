@@ -89,7 +89,9 @@ Feature: E.124.700 - The system shall support the ability to view data quality e
     And I click on the link labeled "Record Status Dashboard"
     Then I should see "Record Status Dashboard (all records)"
     When I click on the link labeled "Arm 1"
-    And I locate the bubble for the "Data Types" instrument on event "Event 1" for record ID "1" and click the repeating instrument bubble for the first instance
+    And I click on the link labeled "1"
+    And I click on the icon in the column labeled "" and the row labeled "1"
+   
     Then I should see "Data Types"
     And I should see "(Instance #1)"
     And I should see "Data quality errors for current form"
@@ -104,7 +106,8 @@ Feature: E.124.700 - The system shall support the ability to view data quality e
     #Repeating Instrument - Instance #2
     And I click on the link labeled "Record Status Dashboard"
     Then I should see "Record Status Dashboard (all records)"
-    And I locate the bubble for the "Data Types" instrument on event "Event 1" for record ID "1" and click the repeating instrument bubble for the second instance
+    And I click on the link labeled "1"
+    And I click on the icon in the column labeled "" and the row labeled "2"
     Then I should see "Data Types"
     And I should see "(Instance #2)"
     And I should NOT see "Data quality errors for current form"
@@ -115,7 +118,8 @@ Feature: E.124.700 - The system shall support the ability to view data quality e
     #Repeating Instrument - Instance #3
     And I click on the link labeled "Record Status Dashboard"
     Then I should see "Record Status Dashboard (all records)"
-    And I locate the bubble for the "Data Types" instrument on event "Event 1" for record ID "1" and click the repeating instrument bubble for the third instance
+    And I click on the link labeled "1"
+    And I click on the icon in the column labeled "" and the row labeled "3"
     Then I should see "Data Types"
     And I should see "(Instance #3)"
     And I should see "Data quality errors for current form"
@@ -199,7 +203,8 @@ Feature: E.124.700 - The system shall support the ability to view data quality e
 
     Given I click on the link labeled "Record Status Dashboard"
     When I click on the link labeled "Arm 1"
-    And I locate the bubble for the "Data Types" instrument on event "Event 1" for record ID "1" and click the repeating instrument bubble for the first instance
+    And I click on the link labeled "1"
+    And I click on the icon in the column labeled "" and the row labeled "1"
     Then I should see "Data Types"
     And I should see "(Instance #1)"
     And I should NOT see "Data quality errors for current form"
@@ -215,7 +220,8 @@ Feature: E.124.700 - The system shall support the ability to view data quality e
   
     Given I click on the link labeled "Record Status Dashboard"
     When I click on the link labeled "Arm 1"
-    And I locate the bubble for the "Data Types" instrument on event "Event 1" for record ID "1" and click the repeating instrument bubble for the first instance
+    And I click on the link labeled "1"
+    And I click on the icon in the column labeled "" and the row labeled "1"
     Then I should see "Data Types"
     And I should see "(Instance #1)"
     And I should NOT see "Data quality errors for current form"

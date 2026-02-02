@@ -28,7 +28,7 @@ Feature: E.124.1300 - The system shall support the ability to view excluded data
     Given I create a new project named "E.124.1200" by clicking on "New Project" in the menu bar, selecting "Practice / Just for fun" from the dropdown, choosing file "fixtures/cdisc_files/E1241200.xml", and clicking the "Create Project" button
 
     #ACTION: Enable the Data Resolution Workflow
-    Given I click on the link labeled "Project Setup"
+    Given I click on the link labeled "Setup"
     And I click on the button labeled "Additional customizations"
     And I select "Data Resolution Workflow" on the dropdown field labeled "Enable:"
     # The below step is for v14 and above
