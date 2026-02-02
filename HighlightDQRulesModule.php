@@ -21,70 +21,91 @@ class HighlightDQRulesModule extends AbstractExternalModule
         return null;
     }
 
-    function MakeDQLink($projectId, $rule, $val): string
+    // Generate a link to the Data Quality rule page
+    private function makeDQLink(int $projectId, string $rule, string $val): string
     {
-        //https://localhost:8443/redcap_v13.8.1/DataQuality/index.php?pid=28#ruleorder_12
         return "<a href='" . APP_PATH_WEBROOT . "/DataQuality/index.php?pid={$projectId}#{$rule}'>{$val}</a>";
     }
 
-    // queries the db for the rule details for rules with the given array of $ruleIds
-    function GetDQRulesDetails($projId, $ruleIds): array
+    // Queries the db for the rule details for rules with the given array of $ruleIds
+    private function getDQRulesDetails(int $projId, array $ruleIds): array
     {
-        $rs = implode(",", $ruleIds);
+        if (empty($ruleIds)) {
+            return [];
+        }
 
-        $query = "
-            select
-                rule_id,
-                rule_order,
-                rule_name,
-                rule_logic,
-                real_time_execute
-            from
-                redcap_data_quality_rules
-            where
-                project_id = $projId
-                and rule_id in (" . $rs . ")
-            order by
-                rule_order;
+        try {
+            // Use parameterized query to prevent SQL injection
+            $placeholders = implode(',', array_fill(0, count($ruleIds), '?'));
+            $params = array_merge([$projId], array_map('intval', $ruleIds));
+
+            $query = "
+                SELECT
+                    rule_id,
+                    rule_order,
+                    rule_name,
+                    rule_logic,
+                    real_time_execute
+                FROM
+                    redcap_data_quality_rules
+                WHERE
+                    project_id = ?
+                    AND rule_id IN ($placeholders)
+                ORDER BY
+                    rule_order
             ";
 
-        $result = db_query($query);
-        $ruleDetails = [];
+            $result = $this->query($query, $params);
+            $ruleDetails = [];
 
-        while ($row = db_fetch_assoc($result)) {
-            $ruleDetails[$row['rule_id']] =
-                array(
+            while ($row = $result->fetch_assoc()) {
+                $ruleDetails[$row['rule_id']] = [
                     "rule_order" => $row['rule_order'],
                     "rule_name" => $row['rule_name'],
                     "rule_logic" => $row['rule_logic'],
-                    "real_time_execute" => $row['real_time_execute']);
-        }
+                    "real_time_execute" => $row['real_time_execute']
+                ];
+            }
 
-        return $ruleDetails;
+            return $ruleDetails;
+        } catch (\Exception $e) {
+            error_log("Highlight DQ Rules: Error fetching rule details - " . $e->getMessage());
+            return [];
+        }
     }
 
-    function GetRoleNameFromIds($projId, $roleIds, $userName): int
+    // Check if user belongs to any of the specified roles
+    private function getRoleNameFromIds(int $projId, array $roleIds, string $userName): int
     {
-        $rs = implode(",", $roleIds);
+        if (empty($roleIds)) {
+            return 0;
+        }
 
-        $query = "
-            select count(*) as count                
-            from
-                redcap_user_roles a
-                inner join redcap_user_rights b
-                on 
-                    a.project_id = b.project_id 
-                    and a.role_id = b.role_id            
-            where
-                a.project_id = ?
-                and a.role_id in (" . $rs . ")
-                and b.username = ?
-            ;
+        try {
+            // Use parameterized query to prevent SQL injection
+            $placeholders = implode(',', array_fill(0, count($roleIds), '?'));
+            $params = array_merge([$projId], array_map('intval', $roleIds), [$userName]);
+
+            $query = "
+                SELECT COUNT(*) as count
+                FROM
+                    redcap_user_roles a
+                    INNER JOIN redcap_user_rights b
+                    ON a.project_id = b.project_id
+                    AND a.role_id = b.role_id
+                WHERE
+                    a.project_id = ?
+                    AND a.role_id IN ($placeholders)
+                    AND b.username = ?
             ";
 
-        $result = db_query($query, [$projId, $userName]);
-        $row = db_fetch_assoc($result);
-        return $row['count'];
+            $result = $this->query($query, $params);
+            $row = $result->fetch_assoc();
+            return (int) $row['count'];
+        } catch (\Exception $e) {
+            error_log("Highlight DQ Rules: Error checking user roles - " . $e->getMessage());
+            return 0;
+        }
     }
 
     public function redcap_data_entry_form($project_id, $record, $instrument, $event_id, $group_id, $repeat_instance)
@@ -109,44 +130,14 @@ class HighlightDQRulesModule extends AbstractExternalModule
             return;
         }
 
-        $cnt = self::GetRoleNameFromIds($project_id, $allowedRoles, $userName);
+        $cnt = $this->getRoleNameFromIds($project_id, $allowedRoles, $userName);
 
         //NOTE: for testing purposes, need to log in and log out to check this works correctly (rather than view as user)
         //current user must be in one of permitted roles or be a superuser
         if ($cnt > 0 || $super) {
-            echo "
-                <script type='text/javascript'>
-
-                    let arrMatches = {};
-
-                    function matchField(ruleId, dq) {
-                        let matches = dq.match(/\[(.*?)\]/g);
-
-                        matches.forEach(function(match) {
-                            // remove leading digits to ensure valid CSS selector
-                            let cleaned = match.substring(1, match.length - 1).replace(/^\d+/, '');
-                            let selector = '#' + cleaned + '-tr';
-
-                            let ele = document.querySelector(selector);
-                            if(ele) {
-                                if(arrMatches[selector]) {
-                                    if(!arrMatches[selector].includes(ruleId)) {
-                                        arrMatches[selector].push(ruleId);
-                                    }
-                                } else {
-                                    arrMatches[selector] = [ruleId];
-                                }
-                            }
-                        })
-                    }
-                    
-                    let arrIconMatches = [];
-                    
-                    function addSingleFieldIconUpdate(fieldName) {
-                        arrIconMatches.push(fieldName);
-                    }
-                </script>
-                ";
+            // Include external CSS and JS files
+            echo '<link rel="stylesheet" href="' . $this->getUrl('css/styles.css') . '">';
+            echo '<script src="' . $this->getUrl('js/highlight.js') . '"></script>';
 
             $dq = new DataQuality();
             $repeat_instrument = $Proj->isRepeatingForm($event_id, $instrument) ? $instrument : "";
@@ -154,7 +145,7 @@ class HighlightDQRulesModule extends AbstractExternalModule
 
             list ($dq_errors, $dq_errors_excluded) = $dq->checkViolationsSingleRecord($record, $event_id, $instrument, array(), $repeat_instance, $repeat_instrument);
             $errors_to_include = array_diff($dq_errors, $dq_errors_excluded);
-            $allErrs = self::GetDQRulesDetails($project_id, $errors_to_include);
+            $allErrs = $this->getDQRulesDetails($project_id, $errors_to_include);
 
             // in response to #115, before simply returning the errors first check whether the rule applies to a single
             // field. If it does, its status may need to be updated as currently the checkViolationsSingleRecord
@@ -212,9 +203,11 @@ class HighlightDQRulesModule extends AbstractExternalModule
                     $realtime = $rule["real_time_execute"] == 1 ? 'yes' : 'no';
                     $escapedRuleLogic = json_encode($rule["rule_logic"]);
                     $ruleNameId = "rulename_" . $ruleId;
-                    $makeLink = $this->MakeDQLink($project_id, $ruleNameId, $rule["rule_name"]);
+                    $makeLink = $this->makeDQLink($project_id, $ruleNameId, htmlspecialchars($rule["rule_name"], ENT_QUOTES, 'UTF-8'));
 
-                    echo "<tr><td>{$ruleId}</td><td>{$rule["rule_order"]}</td><td>{$makeLink}</td><td>{$rule["rule_logic"]}</td></tr>";
+                    // Escape rule_logic to prevent XSS
+                    $safeRuleLogic = htmlspecialchars($rule["rule_logic"], ENT_QUOTES, 'UTF-8');
+                    echo "<tr><td>{$ruleId}</td><td>{$rule["rule_order"]}</td><td>{$makeLink}</td><td>{$safeRuleLogic}</td></tr>";
                     $js .= "<script type='text/javascript'> matchField($ruleId, $escapedRuleLogic) </script>";
                 }
 
@@ -222,84 +215,24 @@ class HighlightDQRulesModule extends AbstractExternalModule
 
                 echo "
                 </table>
-                
+
                 <div class='red' style='width: 800px'>
                     <div><small>rule order - the order as given in the Rule # column in the Data Quality page</small></div>
-                    <div><small>rule id - the internal, unique id of the rule in the database</small></div>                               
+                    <div><small>rule id - the internal, unique id of the rule in the database</small></div>
                 </div>
-                <style>
-                    #form-instance-rule-errors th, #form-instance-rule-errors td {
-                        border-width:1px;
-                        text-align:left;
-                        padding:2px 4px 2px 4px;
-                    }
-                    #form-instance-rule-errors th {
-                        font-weight: bold;
-                    }                    
-                    div[err-data-rule-id] {
-                        margin-top: 3px;                        
-                        padding-top: 2px;
-                        padding-left: 6px;
-                        background-color: rgb(255, 33, 0);
-                        color: white;
-                        border-top-right-radius: 4px;
-                    }
-
-                </style>
     ";
 
                 if ($this->getProjectSetting('highlight-dq-inline')) {
-                    echo "
-                <script type='text/javascript'>
-                    Object.keys(arrMatches).forEach(key => {
-                        let ele = document.querySelector(key);
-
-                        ele.style.borderWidth = '2px';
-                        ele.style.borderColor = 'rgb(255, 33, 0)';
-
-                        const errRuleIds = document.createElement('div');
-                        errRuleIds.setAttribute('err-data-rule-id', key.substring(1, key.length));
-                        errRuleIds.textContent = 'related rule ids: ' + arrMatches[key].join(', ');
-
-                        ele.insertAdjacentElement('beforebegin', errRuleIds);
-                    });
-
-                </script>
-                ";
+                    echo "<script type='text/javascript'>highlightInlineErrors();</script>";
                 }
             }
 
             //gets the exclusions
-            $allExcluded = self::GetDQRulesDetails($project_id, $dq_errors_excluded);
+            $allExcluded = $this->getDQRulesDetails($project_id, $dq_errors_excluded);
 
             //fix the icons
             if (!$this->getProjectSetting('dont-reset-field-data-icon')) {
-                echo "
-                        <script type='text/javascript'>
-                        
-                            //replaces the data status icon for any single fields that have been excluded with the standard
-                            //grey balloon i.e. if a single field check, by default REDCap will mark the field with a green
-                            //tick icon - DMs didn't want this, so below will reset to default icon            
-                            //will also replace the red exclamation icon  
-                            arrIconMatches.forEach(function(item) {
-                                
-                                ///redcap_v13.8.1/Resources/images/tick_circle.png
-                                ///redcap_v13.8.1/Resources/images/balloon_left_bw2.gif
-                                let ele = document.getElementById('dc-icon-' + item);
-                                if(ele) {
-                                    let curr = ele.src;                            
-                                    //replace the green tick
-                                    if(ele.src.endsWith('tick_circle.png')) {
-                                        ele.src = curr.replace('tick_circle.png', 'balloon_left_bw2.gif');    
-                                    }                                    
-                                    //replace the red exclamation
-                                    if(ele.src.endsWith('exclamation_red.png')) {
-                                        ele.src = curr.replace('exclamation_red.png', 'balloon_left_bw2.gif');
-                                    }
-                                }                           
-                            });                        
-                        </script>
-                        ";
+                echo "<script type='text/javascript'>resetFieldIcons();</script>";
             }
 
             //show the excluded
@@ -318,28 +251,20 @@ class HighlightDQRulesModule extends AbstractExternalModule
                     foreach ($dq_errors_excluded as $ruleId) {
                         $rule = $allExcluded[$ruleId];
                         $ruleNameId = "rulename_" . $ruleId;
-                        $makeLink = $this->MakeDQLink($project_id, $ruleNameId, $rule["rule_name"]);
+                        $makeLink = $this->makeDQLink($project_id, $ruleNameId, htmlspecialchars($rule["rule_name"], ENT_QUOTES, 'UTF-8'));
 
-                        echo "<tr><td>{$ruleId}</td><td>{$rule["rule_order"]}</td><td>{$makeLink}</td><td>{$rule["rule_logic"]}</td></tr>";
+                        // Escape rule_logic to prevent XSS
+                        $safeRuleLogic = htmlspecialchars($rule["rule_logic"], ENT_QUOTES, 'UTF-8');
+                        echo "<tr><td>{$ruleId}</td><td>{$rule["rule_order"]}</td><td>{$makeLink}</td><td>{$safeRuleLogic}</td></tr>";
                     }
 
                 echo "
                 </table>
-                
+
                 <div class='green' style='width: 800px'>
                     <div><small>rule order - the order as given in the Rule # column in the Data Quality page</small></div>
-                    <div><small>rule id - the internal, unique id of the rule in the database</small></div>                               
+                    <div><small>rule id - the internal, unique id of the rule in the database</small></div>
                 </div>
-                <style>
-                    #form-instance-rule-exclusions th, #form-instance-rule-exclusions td {
-                        border-width:1px;
-                        text-align:left;
-                        padding:2px 4px 2px 4px;
-                    }
-                    #form-instance-rule-exclusions th {
-                        font-weight: bold;
-                    }                    
-                </style>
     ";
                 }
             }

@@ -1,25 +1,59 @@
-﻿### Highlight DQ rules ###
+# Highlight DQ Rules
 
-The Highlight DQ rules module provides a simple mechanism to highlight rules that are in error within the data entry
-screens for selected user roles. Only rules that execute in real-time are shown. 
+A REDCap External Module that highlights Data Quality rule errors on data entry forms for selected user roles.
 
-#### Set up and configuration ####
+## Overview
 
-Project settings
+This module displays Data Quality rule violations directly on data entry screens, making it easier for data managers and other authorized users to identify and address data issues without navigating to the Data Quality page.
 
-- `user-roles-can-view` - one or more roles can be selected for whom the errored data quality rules are shown. If no
-  roles are selected, the module is effectively disabled. For example, in most cases, it may simply be the Data Manager
-  role that has the highlighting enabled
-- `highlight-dq-inline` - when checked, the field in the data entry page is highlighted as being affected by an errored
-  data quality rule
+Only rules configured to execute in real-time are shown.
 
-#### Usage ####
+## Installation
 
-The list of errored fields is simply created from any referenced fields within the Data Quality resolution logic; 
-therefore, a highlighted field should not be read to 'be in error' - rather, it should be read to be 'referenced within
-a failing data quality rule'.
+1. Enable the module in Control Center > External Modules
+2. Enable the module for specific projects as needed
 
-The table of data quality errors includes a rule name that provides a link to the relevant rule within the Data Quality
-page. The user requires Data Quality Rule access to view the target of the link.
+## Configuration
 
-If the rule is highlighted in line, the annotation includes the rule ids of the related rule.
+### Project Settings
+
+| Setting | Description |
+|---------|-------------|
+| `user-roles-can-view` | Select one or more user roles that can view DQ rule errors. If no roles are selected, the module is disabled. |
+| `highlight-dq-inline` | When checked, highlights fields directly on the form that are referenced in failing DQ rules. |
+| `dont-show-excluded-table` | When checked, hides the table showing excluded/verified rules. |
+| `dont-reset-field-data-icon` | When checked, preserves the default REDCap data status icons instead of resetting them. |
+
+All settings are restricted to super users only.
+
+## Usage
+
+### Error Table
+
+When a user with an authorized role views a data entry form, a table appears showing:
+- **Rule ID** - Internal database identifier for the rule
+- **Rule Order** - The Rule # as shown on the Data Quality page
+- **Rule Name** - Clickable link to the rule on the Data Quality page
+- **Rule Logic** - The logic expression for the rule
+
+### Inline Highlighting
+
+When `highlight-dq-inline` is enabled:
+- Fields referenced in failing rules are highlighted with a red border
+- A red banner shows the related rule IDs above the highlighted field
+
+Note: A highlighted field indicates it is "referenced within a failing data quality rule" - not necessarily that the field itself contains the error.
+
+### Excluded Rules Table
+
+A separate green table shows rules that have been excluded (verified) for the current record, unless disabled via settings.
+
+## Troubleshooting
+
+### Module not showing errors
+- Verify the user is assigned to a role listed in `user-roles-can-view`
+- Ensure the DQ rules are configured for real-time execution
+- Check that the module is enabled for the project
+
+### Errors in PHP log
+The module logs errors to the PHP error log with the prefix "Highlight DQ Rules:". Check your server's error log for details.

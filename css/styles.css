@@ -1,0 +1,35 @@
+/* Highlight DQ Rules Module Styles */
+
+/* Error table styles */
+#form-instance-rule-errors th,
+#form-instance-rule-errors td {
+    border-width: 1px;
+    text-align: left;
+    padding: 2px 4px 2px 4px;
+}
+
+#form-instance-rule-errors th {
+    font-weight: bold;
+}
+
+/* Inline error highlight marker */
+div[err-data-rule-id] {
+    margin-top: 3px;
+    padding-top: 2px;
+    padding-left: 6px;
+    background-color: rgb(255, 33, 0);
+    color: white;
+    border-top-right-radius: 4px;
+}
+
+/* Exclusion table styles */
+#form-instance-rule-exclusions th,
+#form-instance-rule-exclusions td {
+    border-width: 1px;
+    text-align: left;
+    padding: 2px 4px 2px 4px;
+}
+
+#form-instance-rule-exclusions th {
+    font-weight: bold;
+}

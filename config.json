@@ -8,12 +8,12 @@
       "name": "Richard Hardy",
       "email": "rmh54@cam.ac.uk",
       "institution": "University of Cambridge - Cambridge Cancer Trials Centre"
+    },
+    {
+      "name": "Mintoo Xavier",
+      "email": "mintoo.xavier1@nhs.net",
+      "institution": "Cambridge University Hospital - Cambridge Cancer Trials Centre"
     }
-  ],
-
-  "links": {
-  },
-  "system-settings": [
   ],
   "project-settings": [
     {
@@ -46,11 +46,10 @@
       "super-users-only": true
     }
   ],
-
   "compatibility": {
     "php-version-min": "8.0.27",
     "php-version-max": "8.2.29",
     "redcap-version-min": "13.8.1",
-    "redcap-version-max": "14.7.0"
+    "redcap-version-max": "15.9.1"
   }
 }
