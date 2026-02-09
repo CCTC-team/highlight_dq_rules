@@ -1,4 +1,4 @@
-Feature: E.124.1300 - The system shall support the ability to view excluded data quality rules in instruments based on user roles using Highlight DQ Rules external module.
+Feature: E.124.1200 - The system shall support the ability to view excluded data quality rules in instruments based on user roles using Highlight DQ Rules external module.
 
   As a REDCap end user
   I want to see that Highlight DQ Rules External Module work as expected

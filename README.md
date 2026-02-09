@@ -57,3 +57,16 @@ A separate green table shows rules that have been excluded (verified) for the cu
 
 ### Errors in PHP log
 The module logs errors to the PHP error log with the prefix "Highlight DQ Rules:". Check your server's error log for details.
+
+#### Automation Testing
+
+This module is tested using automated tests implemented with the **Cypress** framework. To set up Cypress, refer to the following repository:  
+https://github.com/vanderbilt-redcap/redcap_cypress
+
+We use a custom Docker instance, **CCTC_REDCap_Docker**, instead of `redcap_docker`. This instance mirrors our Live environment by using the same versions of **MariaDB** and **PHP**.
+
+All automated test scripts are located in the `automated_tests` directory. These scripts can also be used to manually test the external module. The directory contains:
+- Custom step definitions created by our team
+- Fixture files
+- User Requirement Specification (URS) documents
+- Feature test scripts

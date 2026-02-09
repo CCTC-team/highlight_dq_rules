@@ -1,9 +1,9 @@
-Feature: E.124.1400 - The system shall support the ability to configure 'Module configuration permissions in projects' for Highlight DQ Rules external module.
+Feature: E.124.1300 - The system shall support the ability to configure 'Module configuration permissions in projects' for Highlight DQ Rules external module.
 
   As a REDCap end user
   I want to see that Highlight DQ Rules is functioning as expected
 
-Scenario: E.124.1400 - Module configuration permissions in projects
+Scenario: E.124.1300 - Module configuration permissions in projects
     Given I login to REDCap with the user "Test_Admin"
     When I click on the link labeled "Control Center"
     When I click on the link labeled "Manage"
@@ -22,7 +22,7 @@ Scenario: E.124.1400 - Module configuration permissions in projects
     And I click on the button labeled "Save"
     Then I should see "Highlight DQ Rules - v1.0.0"
 
-    When I create a new project named "E.124.1400" by clicking on "New Project" in the menu bar, selecting "Practice / Just for fun" from the dropdown, choosing file "fixtures/cdisc_files/Project_redcap_val_nodata.xml", and clicking the "Create Project" button
+    When I create a new project named "E.124.1300" by clicking on "New Project" in the menu bar, selecting "Practice / Just for fun" from the dropdown, choosing file "fixtures/cdisc_files/Project_redcap_val_nodata.xml", and clicking the "Create Project" button
 
     # Enable external module
     And I click on the link labeled "Manage"
@@ -51,7 +51,7 @@ Scenario: E.124.1400 - Module configuration permissions in projects
     Then I should see "Highlight DQ Rules - v1.0.0"
 
     When I click on the link labeled "My Projects"
-    And I click on the link labeled "E.124.1400"
+    And I click on the link labeled "E.124.1300"
 
     #VERIFY
     When I click on the link labeled "User Rights"
@@ -68,10 +68,10 @@ Scenario: E.124.600 - View Usage of the external module
     And I click on the link labeled "Manage"
     Then I should see "Highlight DQ Rules - v1.0.0"
     When I click on the button labeled "View Usage"
-    And I should see a link labeled "E.124.1400"
-    When I click on the link labeled "E.124.1400"
+    And I should see a link labeled "E.124.1300"
+    When I click on the link labeled "E.124.1300"
     Then I should see "Project Home"
-    And I should see "E.124.1400"
+    And I should see "E.124.1300"
 
     # Disable external module in Control Center
     When I click on the link labeled "Control Center"
