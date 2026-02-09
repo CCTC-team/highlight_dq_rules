@@ -222,8 +222,8 @@ The module includes automated Cypress feature tests in the `automated_tests/` di
 | E.124.200 | Enable module on all projects |
 | E.124.400 | Allow non-admins to enable this module |
 | E.124.500 | Hide this module from non-admins |
-| E.124.1200 | Exclude field in project |
-| E.124.1400 | Module configuration permissions in projects |
+| E.124.1200 | Exclude DQR in project |
+| E.124.1300 | Module configuration permissions in projects |
 
 Test fixtures include CDISC XML files and CSV data import files. Custom step definitions for non-core steps are in `automated_tests/step_definitions/noncore.js`.
 
