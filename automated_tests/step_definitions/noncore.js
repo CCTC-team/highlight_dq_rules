@@ -4,15 +4,16 @@ const path = Cypress.config('projectRoot')
 
 import 'cypress-file-upload'
 
-// To make sure emails are deleted only once per Test Script
+// To make sure cleanup runs only once per Test Script
 let hasRunBeforeEach = false
 
 let Password = null
 
-// delete all the messages from MailHog
+// Clear redcap_file_repository folder and delete all emails from MailHog
 beforeEach(() => {
     if (!hasRunBeforeEach) {
         hasRunBeforeEach = true
+        cy.task('clearFileRepo')
         cy.deleteAllEmails()
       }
 })
@@ -136,14 +137,15 @@ defineParameterType({
 })
 
 defineParameterType({
-    name: 'calendarOption',
-    regexp: /Month|Day|Year/
+    name: 'dropdownOption',
+    regexp: /Month|Day|Year|Expiration/
 })
 
-calendarOption = {
+dropdownOption = {
     'Month' : `select#month`,
     'Day' : `select#day`,
-    'Year' : `select#year`
+    'Year' : `select#year`,
+    'Expiration' : `select#expireDays`
 }
 
 calendarEvent = {
@@ -261,22 +263,20 @@ drwRights = {
 
 
 /**
- * @module e-consent
+ * @module Interactions
  * @author Mintoo Xavier <min2xavier@gmail.com>
- * @example I select the radio option {string} for the e-consent Framework
- * @param {string} option - option to click for the e-consent Framework
- * @description Clicks on the given option for the e-consent Framework
+ * @example I select the radio option {string} for ASI
+ * @param {string} option - ASI option to select
+ * @description Clicks on the given radio option for ASI
  */
-Given('I select the radio option {string} for the e-consent Framework', (option) => {
-    let value = 0
-
-    if (option == 'Auto-Archiver enabled')
-        value = 1
-    else if (option == 'Auto-Archiver + e-Consent Framework')
-        value = 2
-    else
-        value = 0
-    cy.get('input[type=radio][name=pdf_auto_archive][value='+ value + ']').click()
+Given('I select the radio option {string} for ASI', (option) => {
+    cy.get('div.boldish input[type="radio"]').each(($input) => {
+        const nextText = $input[0].nextSibling?.textContent?.trim()
+        if (nextText && nextText.includes(option.trim())) {
+            cy.wrap($input).click()
+            return false // stop iteration
+        }
+    })
 })
 
 
@@ -606,19 +606,36 @@ Given("I {clickType} the checkbox labeled {addcustomization} in additional custo
     })
 })
 
-
 /**
- * @module Interactions
+ * @module DataImport
  * @author Mintoo Xavier <min2xavier@gmail.com>
- * @example I click on the textarea labeled {string}
- * @param {string} label - the label associated with the textarea field
- * @description Clicks on the textarea field with given label
+ * @param {string} format - the format of the file that is being uploaded (e.g. csv)
+ * @param {string} file_location - the location of the file being uploaded (e.g. import_files/core/filename.csv)
+ * @param {string} button_label - text on the button you click to upload
+ * @description Imports well-formed REDCap data import file (of specific type) to a specific project given a Project ID.
  */
-Given("I click on the textarea labeled {string}", (label) => {
-    cy.contains(label).then(($label) => {
-        cy.wrap($label).parent().find('textarea').click()
-    })
+Given("I upload a {string} format file located at {string}, by clicking the button labeled {string}", (format, file_location, button_label) => {
+    file_location = getFilePathForCurrentFeature(file_location)
+    const filePath = 'cypress/fixtures/' + file_location
+
+    // Attach file to the hidden input first
+    cy.get('input[type=file]').selectFile(filePath, { force: true })
+    // Then click the submit/OK button
+    cy.get(`button.ok-button:contains("${button_label}"), input[type=submit][value*="${button_label}"], button:contains("${button_label}")`).first().click()
 })
+
+// /**
+//  * @module Interactions
+//  * @author Mintoo Xavier <min2xavier@gmail.com>
+//  * @example I click on the textarea labeled {string}
+//  * @param {string} label - the label associated with the textarea field
+//  * @description Clicks on the textarea field with given label
+//  */
+// Given("I click on the textarea labeled {string}", (label) => {
+//     cy.contains(label).then(($label) => {
+//         cy.wrap($label).parent().find('textarea').click()
+//     })
+// })
 
 
 /**
@@ -762,6 +779,85 @@ Given("I should NOT see an email with subject {string}", (subject) => {
     cy.noEmailsWithSubject(subject)
 })
 
+
+/**
+ * @module MailHog
+ * @author Mintoo Xavier <min2xavier@gmail.com>
+ * @example I should see {string} in the email body
+ * @param {string} text - text to verify in the email body
+ * @description Verifies that the specified text appears in the currently opened email body in MailHog
+ */
+Given("I should see {string} in the email body", (text) => {
+    // Try HTML preview first, then fall back to plaintext
+    cy.get('iframe#preview-html').then(($iframe) => {
+        if ($iframe.length > 0 && $iframe.is(':visible')) {
+            cy.wrap($iframe)
+                .its('0.contentDocument.body')
+                .should('not.be.empty')
+                .then(cy.wrap)
+                .should('contain', text)
+        } else {
+            // Fall back to plaintext preview
+            cy.get('#preview-plaintext').should('contain', text)
+        }
+    })
+})
+
+
+// /**
+//  * @module MailHog
+//  * @author Mintoo Xavier <min2xavier@gmail.com>
+//  * @example I should NOT see {string} in the email body
+//  * @param {string} text - text that should not appear in the email body
+//  * @description Verifies that the specified text does NOT appear in the currently opened email body in MailHog
+//  */
+// Given("I should NOT see {string} in the email body", (text) => {
+//     // Try HTML preview first, then fall back to plaintext
+//     cy.get('iframe#preview-html').then(($iframe) => {
+//         if ($iframe.length > 0 && $iframe.is(':visible')) {
+//             cy.wrap($iframe)
+//                 .its('0.contentDocument.body')
+//                 .should('not.be.empty')
+//                 .then(cy.wrap)
+//                 .should('not.contain', text)
+//         } else {
+//             // Fall back to plaintext preview
+//             cy.get('#preview-plaintext').should('not.contain', text)
+//         }
+//     })
+// })
+
+
+/**
+ * @module MailHog
+ * @author Mintoo Xavier <min2xavier@gmail.com>
+ * @example I open the email for user {string} with subject {string}
+ * @param {string} recipient - email id of recipient
+ * @param {string} subject - subject of the email
+ * @description Opens the email with a given subject for user in MailHog UI
+ */
+Given("I open the email for user {string} with subject {string}", (recipient, subject) => {
+     // Visit MailHog web UI
+    cy.visit('http://localhost:8025');
+
+    // Wait for the email list to load
+    cy.get('.msglist-message', { timeout: 10000 }).should('have.length.greaterThan', 0);
+
+    // Find the email row that matches the subject and recipient
+    cy.get('.msglist-message').each(($el) => {
+        const emailText = $el.text();
+
+        // Check if both subject and recipient match in the message list row
+        if (emailText.includes(subject) && emailText.includes(recipient)) {
+            cy.wrap($el).click(); // Open that specific email
+            return false; // stop iteration once found
+        }
+    });
+
+    // Wait for the email preview to appear
+    cy.get('#preview-plaintext, #preview-html', { timeout: 10000 }).should('exist');
+
+})
 
 
 /**
@@ -1094,22 +1190,22 @@ Given("I select the {dropdownType} option {drwOptions} in Data Resolution Workfl
 })
 
 
-/**
- * @module Interactions
- * @author Mintoo Xavier <min2xavier@gmail.com>
- * @example I {enterType} {string} in the comment box in {commentDrw}
- * @param {string} text - text to enter/verify
- * @description enter/verify comment in the comment box in Data Resolution Workflow/Field Comment Log
- */
-Given("I {enterType} {string} in the comment box in {commentDrw}", (enter_type, text, comdrw) => {
-    if(enter_type === "enter"){
-        cy.get('textarea#dc-comment').type(text)
-    } else if (enter_type === "clear field and enter") {
-        cy.get('textarea#dc-comment').clear().type(text)
-    } else if (enter_type === "verify"){
-        cy.get('textarea#dc-comment').invoke('val').should('include', text)
-    }
-})
+// /**
+//  * @module Interactions
+//  * @author Mintoo Xavier <min2xavier@gmail.com>
+//  * @example I {enterType} {string} in the comment box in {commentDrw}
+//  * @param {string} text - text to enter/verify
+//  * @description enter/verify comment in the comment box in Data Resolution Workflow/Field Comment Log
+//  */
+// Given("I {enterType} {string} in the comment box in {commentDrw}", (enter_type, text, comdrw) => {
+//     if(enter_type === "enter"){
+//         cy.get('textarea#dc-comment').type(text)
+//     } else if (enter_type === "clear field and enter") {
+//         cy.get('textarea#dc-comment').clear().type(text)
+//     } else if (enter_type === "verify"){
+//         cy.get('textarea#dc-comment').invoke('val').should('include', text)
+//     }
+// })
 
 
 /**
@@ -1124,16 +1220,16 @@ Given("I select the User Right named Data Resolution Workflow and choose {drwRig
 })
 
 
-/**
- * @module Interactions
- * @author Mintoo Xavier <min2xavier@gmail.com>
- * @example I select the dropdown option {string} in Data Resolution Workflow
- * @param {string} option - option to select
- * @description selects the dropdown option in Data Resolution Workflow
- */
-Given("I select the dropdown option {string} in Data Resolution Workflow", (option) => {
-    cy.get('table#newDCHistory').find('select').select(option)  
-})
+// /**
+//  * @module Interactions
+//  * @author Mintoo Xavier <min2xavier@gmail.com>
+//  * @example I select the dropdown option {string} in Data Resolution Workflow
+//  * @param {string} option - option to select
+//  * @description selects the dropdown option in Data Resolution Workflow
+//  */
+// Given("I select the dropdown option {string} in Data Resolution Workflow", (option) => {
+//     cy.get('table#newDCHistory').find('select').select(option)  
+// })
 
 
 /**
@@ -1150,32 +1246,32 @@ Given("I select the option {string} from the dropdown field for {resolveType} in
 })
 
 
-/**
- * @module Interactions
- * @author Mintoo Xavier <min2xavier@gmail.com>
- * @example I click on the {onlineDesignerFieldIcons} icon for the Comment {string}
- * @param {string} icon - icon to click
- * @param {string} comment - comment
- * @description clicks on the icon of the comment
- */
-Given("I click on the {onlineDesignerFieldIcons} icon for the Comment {string}", (icon, comment) => {
-    cy.get('td').contains(comment).parents('tr').within(() => {
-        cy.get(onlineDesignerFieldIcons[icon]).click()  
-    })
-})
+// /**
+//  * @module Interactions
+//  * @author Mintoo Xavier <min2xavier@gmail.com>
+//  * @example I click on the {string} icon for the Comment {string}
+//  * @param {string} icon - icon to click
+//  * @param {string} comment - comment
+//  * @description clicks on the icon of the comment
+//  */
+// Given("I click on the {string} icon for the Comment {string}", (icon, comment) => {
+//     cy.get('td').contains(comment).parents('tr').within(() => {
+//         cy.get(window.onlineDesignerFieldIcons[icon]).click()
+//     })
+// })
 
 
 /**
  * @module Interactions
  * @author Mintoo Xavier <min2xavier@gmail.com>
- * @example I should NOT see {onlineDesignerFieldIcons} icon for the Comment {string}
+ * @example I should NOT see {string} icon for the Comment {string}
  * @param {string} icon - icon to verify
  * @param {string} comment - comment
  * @description verifies the icon of the comment
  */
-Given("I should NOT see {onlineDesignerFieldIcons} icon for the Comment {string}", (icon, comment) => {
+Given("I should NOT see {string} icon for the Comment {string}", (icon, comment) => {
     cy.get('td').contains(comment).parents('tr').within(() => {
-        cy.get(onlineDesignerFieldIcons[icon]).should('not.exist')
+        cy.get(window.onlineDesignerFieldIcons[icon]).should('not.exist')
     })
 })
 
@@ -1386,30 +1482,16 @@ Given("I (should )see the {instrumentPrivilege} of the instrument {string} with 
 })
 
 
-/**
- * @module DataImport
- * @author Mintoo Xavier <min2xavier@gmail.com>
- * @example I upload a {string} format file located at {string}, by clicking the button {string}
- * @param {string} format - the format of the file that is being uploaded (e.g. csv)
- * @param {string} file_location - the location of the file being uploaded (e.g. import_files/core/filename.csv)
- * @param {string} button_label - text on the button you click to upload
- * @description Imports well-formed REDCap data import file (of specific type) to a specific project given a Project ID.
- */
-Given("I upload a {string} format file located at {string}, by clicking the button {string}", (format, file_location, button_label) => {
-        cy.upload_file(file_location, format, '')
-})
-
-
-/**
- * @module Interactions
- * @author Mintoo Xavier <min2xavier@gmail.com>
- * @example I click on the list item {string}
- * @param {string} text - list item to click
- * @description clicks on the list item
- */
-Given("I click on the list item {string}", (text) => {
-    cy.get('li').contains(text).click()
-})
+// /**
+//  * @module Interactions
+//  * @author Mintoo Xavier <min2xavier@gmail.com>
+//  * @example I click on the list item {string}
+//  * @param {string} text - list item to click
+//  * @description clicks on the list item
+//  */
+// Given("I click on the list item {string}", (text) => {
+//     cy.get('li').contains(text).click()
+// })
 
 
 /**
@@ -1573,13 +1655,13 @@ Given("I click on the {calendarEvent} icon for the event named {string} in the S
 /**
  * @module Interactions
  * @author Mintoo Xavier <min2xavier@gmail.com>
- * @example I select {string} on the {calendarOption} dropdown field
+ * @example I select {string} on the {dropdownOption} dropdown field
  * @param {string} text - text to select
- * @param {string} calendarOption - available options: 'Month', 'Day', 'Year'
+ * @param {string} dropdownOption - available options: 'Month', 'Day', 'Year'
  * @description selects the dropdown option for alert form name/status
  */
-Given("I select {string} on the {calendarOption} dropdown field", (text, option) => {
-    cy.get(calendarOption[option]).select(text)
+Given("I select {string} on the {dropdownOption} dropdown field", (text, option) => {
+    cy.get(dropdownOption[option]).select(text)
 })
 
 
@@ -1678,4 +1760,49 @@ Cypress.Commands.add('get_record_status_dashboard_nonlongitudinal', (instrument,
  */
 Given("I locate the bubble for the {string} instrument for record ID {string}{cellAction}", (instrument, record_id, cell_action) => {
     cy.get_record_status_dashboard_nonlongitudinal(instrument, record_id, cell_action)
+})
+
+
+/**
+ * @module Visibility
+ * @author Mintoo Xavier <min2xavier@gmail.com>
+ * @example I should NOT see a button named "Submit"
+ * @param {string} label - the label text of the button
+ * @description Verifies that a button with the specified label either does not exist or is disabled
+ */
+Given("I should NOT see a button named {string}", (label) => {
+    cy.get('body').then(($body) => {
+        // Check for button element with text
+        const $button = $body.find(`button:contains("${label}")`)
+
+        if ($button.length > 0) {
+            // Button exists, verify it has display: none
+            cy.wrap($button).should('have.css', 'display', 'none')
+        } else {
+            // button does not exist
+            expect($button.length).to.equal(0)
+        }
+    })
+})
+
+/**
+ * @module Interactions
+ * @author Mintoo Xavier <min2xavier@gmail.com>
+ * @example I enter {string} into the embedded field labeled {string}
+ * @param {string} msg - message to enter
+ * @param {string} label - label of the embedded field
+ * @description enters text into the embedded field with the specified label
+ */
+Given("I enter {string} into the embedded field labeled {string}", (text, label) => {
+    cy.contains(label).then($el => {
+        const childNodes = $el[0].childNodes
+        for (let i = 0; i < childNodes.length; i++) {
+            if (childNodes[i].nodeType === Node.TEXT_NODE && childNodes[i].textContent.includes(label)) {
+                let next = childNodes[i].nextSibling
+                while (next && next.nodeType !== Node.ELEMENT_NODE) next = next.nextSibling
+                cy.wrap(next).find('input').clear().type(text)
+                break
+            }
+        }
+    })
 })
