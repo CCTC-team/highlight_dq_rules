@@ -2,7 +2,7 @@
   "name": "Highlight DQ Rules",
   "description": "Module that highlights the DQ rule errors when reviewing data",
   "namespace": "CCTC\\HighlightDQRulesModule",
-  "framework-version": 14,
+  "framework-version": 16,
   "authors": [
     {
       "name": "Richard Hardy",
