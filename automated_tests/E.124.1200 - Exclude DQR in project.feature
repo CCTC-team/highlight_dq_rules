@@ -95,7 +95,7 @@ Feature: E.124.1200 - The system shall support the ability to view excluded data
     And I should see "Discrepancies found: 1"
     And I click on the button labeled "comments"
     When I select the radio option Verified data value in Data Resolution Workflow
-    And I enter "Verify DQR" in the comment box in Data Resolution Workflow
+    And I enter "Verify DQR" into the textarea field labeled "Comment"
     And I click on the button labeled "Verified data value"
     And I wait for 1 second
     Then I should NOT see "Data Resolution Workflow"
@@ -194,7 +194,7 @@ Feature: E.124.1200 - The system shall support the ability to view excluded data
     And I should see "Discrepancies found: 1"
     And I click on the button labeled "comment"
     When I select the radio option De-verify data value in Data Resolution Workflow
-    And I enter "De-verify DQR" in the comment box in Data Resolution Workflow
+    And I enter "De-verify DQR" into the textarea field labeled "Comment"
     And I click on the button labeled "De-verify data value"
     And I wait for 1 second
     Then I should NOT see "Data Resolution Workflow"
@@ -238,7 +238,7 @@ Feature: E.124.1200 - The system shall support the ability to view excluded data
     And I should see "Discrepancies found: 1"
     And I click on the button labeled "comments"
     When I select the radio option Verified data value in Data Resolution Workflow
-    And I enter "Re-verify DQR" in the comment box in Data Resolution Workflow
+    And I enter "Re-verify DQR" into the textarea field labeled "Comment"
     And I click on the button labeled "Verified data value"
     And I wait for 1 second
     Then I should NOT see "Data Resolution Workflow"
