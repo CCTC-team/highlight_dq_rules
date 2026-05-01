@@ -186,6 +186,17 @@ jobs:
           npm install
           npm run redcap_rsvc:install || echo "RSVC install failed or not needed"
 
+      - name: Expose redcap_cypress node_modules to EM step_definitions
+        run: |
+          # The EM ships its own step_definitions/external_module.js, which
+          # `require('@badeball/cypress-cucumber-preprocessor')`. esbuild walks
+          # up from that file looking for node_modules — but the EM lives
+          # outside redcap_cypress, so it never finds the install. Symlink
+          # node_modules next to the EM so the require resolves.
+          TARGET="CCTC_REDCap_Docker/redcap_source/modules/${{ env.EM_NAME }}_${{ env.EM_VERSION }}/node_modules"
+          ln -sfn "$GITHUB_WORKSPACE/redcap_cypress/node_modules" "$TARGET"
+          ls -la "$TARGET/@badeball/cypress-cucumber-preprocessor" >/dev/null
+
       - name: Patch rctf after:run handler
         working-directory: redcap_cypress
         run: |
