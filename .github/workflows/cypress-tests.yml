@@ -71,12 +71,11 @@ jobs:
 
       - name: Get REDCap Source
         env:
-          # Prefer a dedicated PAT for redcap_source if provided; fall back to CCTC_TEAM_PAT.
-          GH_PAT: ${{ secrets.REDCAP_SOURCE_PAT || secrets.CCTC_TEAM_PAT }}
+          GH_PAT: ${{ secrets.CCTC_TEAM_PAT }}
         run: |
           if [ -z "$GH_PAT" ]; then
             echo "::error::No PAT available for cloning CCTC-team/redcap_source."
-            echo "Set repo secret CCTC_TEAM_PAT (or REDCAP_SOURCE_PAT) on this repository."
+            echo "Set repo secret CCTC_TEAM_PAT on this repository."
             exit 1
           fi
 
@@ -94,9 +93,8 @@ jobs:
             -H "Accept: application/vnd.github+json" \
             https://api.github.com/repos/CCTC-team/redcap_source)
           if [ "$HTTP_CODE" != "200" ]; then
-            echo "::error::PAT cannot access CCTC-team/redcap_source (HTTP $HTTP_CODE)."
-            echo "Grant the PAT 'Contents: Read' access to CCTC-team/redcap_source,"
-            echo "or set a separate REDCAP_SOURCE_PAT secret on this repo."
+            echo "::error::CCTC_TEAM_PAT cannot access CCTC-team/redcap_source (HTTP $HTTP_CODE)."
+            echo "Grant CCTC_TEAM_PAT 'Contents: Read' access to CCTC-team/redcap_source."
             exit 1
           fi
 

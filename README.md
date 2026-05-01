@@ -96,8 +96,7 @@ The module ships with a CI workflow at [.github/workflows/cypress-tests.yml](.gi
 7. Merges mochawesome JSON reports and uploads test results, videos, and (on failure) screenshots as artifacts retained for 30 days.
 
 **Required repository secrets**
-- `CCTC_TEAM_PAT` — PAT with read access to the CCTC-team repos (and to `redcap_source`, unless `REDCAP_SOURCE_PAT` is set separately).
-- `REDCAP_SOURCE_PAT` *(optional)* — dedicated PAT for `redcap_source` if you don't want to grant `CCTC_TEAM_PAT` access to it.
+- `CCTC_TEAM_PAT` — PAT with read access to the CCTC-team repos, including `redcap_source`.
 - `PROJECT_ID` — Cypress Cloud project ID substituted into `cypress.config.js`.
 - `CYPRESS_RECORD_KEY` — Cypress Cloud record key (recording is gated by `CYPRESS_DISABLE_RECORDING`, currently set to `1`).
 
