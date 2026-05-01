@@ -253,6 +253,10 @@ jobs:
         run: |
           if ls cypress/results/json/*.json >/dev/null 2>&1; then
             npm run report
+            REPORT_BASENAME="${{ env.EM_NAME }}_${{ env.EM_VERSION }}-test-report"
+            mv cypress/results/test-report.json "cypress/results/${REPORT_BASENAME}.json"
+            mv cypress/results/html/test-report.html "cypress/results/html/${REPORT_BASENAME}.html"
+            echo "Renamed merged report to ${REPORT_BASENAME}.{json,html}"
           else
             echo "::warning::No mochawesome JSON files were produced — Cypress likely failed before any spec ran."
           fi
@@ -261,10 +265,11 @@ jobs:
         uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: highlight-dq-rules-cypress-results
+          name: ${{ env.EM_NAME }}_${{ env.EM_VERSION }}-cypress-results
           path: |
             redcap_cypress/cypress/results/json/*.json
-            redcap_cypress/cypress/results/html/test-report.html
+            redcap_cypress/cypress/results/${{ env.EM_NAME }}_${{ env.EM_VERSION }}-test-report.json
+            redcap_cypress/cypress/results/html/${{ env.EM_NAME }}_${{ env.EM_VERSION }}-test-report.html
           retention-days: 30
           if-no-files-found: warn
 
@@ -272,7 +277,7 @@ jobs:
         uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: highlight-dq-rules-cypress-videos
+          name: ${{ env.EM_NAME }}_${{ env.EM_VERSION }}-cypress-videos
           path: redcap_cypress/cypress/videos/
           retention-days: 30
           if-no-files-found: warn
@@ -281,7 +286,7 @@ jobs:
         uses: actions/upload-artifact@v4
         if: failure()
         with:
-          name: highlight-dq-rules-cypress-screenshots
+          name: ${{ env.EM_NAME }}_${{ env.EM_VERSION }}-cypress-screenshots
           path: redcap_cypress/cypress/screenshots/
           retention-days: 30
           if-no-files-found: warn
