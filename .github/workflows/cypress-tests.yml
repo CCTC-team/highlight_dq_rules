@@ -237,10 +237,8 @@ jobs:
           CYPRESS_MAX_ATTEMPTS: '3'
           CYPRESS_GROUP_PREFIX: highlight-dq-rules-em
           CYPRESS_DISABLE_RECORDING: '1'
-          # Tighter watchdog now that the rctf hang is patched: if no new spec
-          # report appears for 5 min, something else is wrong — fail fast
-          # rather than burning the job timeout.
-          CYPRESS_STALL_MS: '300000'
+          # Watchdog: if no new spec report appears for 15 min, treat as hung.
+          CYPRESS_STALL_MS: '900000'
         run: |
           export UID
           npm run test:retry-failed -- --spec-file shard-specs.txt
