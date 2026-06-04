@@ -17,7 +17,7 @@ env:
   RSVC_BRANCH: "redcap_val"
   RCTF_BRANCH: "redcap_val"
   EM_NAME: "highlight_dq_rules"
-  EM_VERSION: "v1.0.0"
+  EM_VERSION: "v1.0.1"
 
 jobs:
   cypress-tests:

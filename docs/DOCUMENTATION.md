@@ -35,7 +35,7 @@ The **Highlight DQ Rules** external module displays Data Quality (DQ) rule viola
 ### Directory Structure
 
 ```
-highlight_dq_rules_v1.0.0/
+highlight_dq_rules_v1.0.1/
 ├── config.json
 ├── HighlightDQRulesModule.php
 ├── DOCUMENTATION.md
