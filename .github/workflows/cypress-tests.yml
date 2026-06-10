@@ -14,8 +14,6 @@ on:
 env:
   CCTC_DOCKER_BRANCH: "redcap_val"
   CYPRESS_BRANCH: "redcap_val"
-  RSVC_BRANCH: "redcap_val"
-  RCTF_BRANCH: "redcap_val"
   EM_NAME: "highlight_dq_rules"
   EM_VERSION: "v1.0.1"
 
@@ -170,13 +168,6 @@ jobs:
 
           echo "=== cypress.env.json ==="
           cat cypress.env.json
-
-      - name: Update package.json dependencies for CCTC-team repositories
-        working-directory: redcap_cypress
-        run: |
-          sed -i 's|"rctf": "github:vanderbilt-redcap/rctf#[^"]*"|"rctf": "github:CCTC-team/rctf#${{ env.RCTF_BRANCH }}"|' package.json
-          sed -i 's|"redcap_rsvc": "github:vanderbilt-redcap/redcap_rsvc#[^"]*"|"redcap_rsvc": "github:CCTC-team/vanderbilt_redcap_rsvc#${{ env.RSVC_BRANCH }}"|' package.json
-          sed -i 's|"url": "https://github.com/vanderbilt-redcap/redcap_cypress.git"|"url": "https://github.com/CCTC-team/redcap_cypress.git"|' package.json
 
       - name: Install Cypress and dependencies
         working-directory: redcap_cypress
