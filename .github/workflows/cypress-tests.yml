@@ -172,8 +172,16 @@ jobs:
       - name: Install Cypress and dependencies
         working-directory: redcap_cypress
         run: |
-          npm install
-          npm run redcap_rsvc:install || echo "RSVC install failed or not needed"
+          # npm ci installs exactly the committed package-lock.json (deterministic,
+          # matched esbuild) instead of `npm install` + `redcap_rsvc:install`, whose
+          # `clean` deleted package-lock.json and reinstalled lockless — that drift
+          # caused esbuild's "Expected id 3 but got id 2" crash at config load.
+          npm ci
+          # move_files copies redcap_rsvc/Files fixtures into cypress/fixtures (most
+          # fixtures live in redcap_rsvc, not the EM repo). Non-destructive half of
+          # redcap_rsvc:install — keeps the lockfile. Without it cypress/fixtures is
+          # empty and specs hang until the stall watchdog kills CI.
+          npm run redcap_rsvc:move_files
 
       - name: Expose redcap_cypress node_modules to EM step_definitions
         run: |
