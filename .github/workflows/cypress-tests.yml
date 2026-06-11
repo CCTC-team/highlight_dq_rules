@@ -12,8 +12,8 @@ on:
   workflow_dispatch:
 
 env:
-  CCTC_DOCKER_BRANCH: "redcap_val"
-  CYPRESS_BRANCH: "redcap_val"
+  CCTC_DOCKER_REF: "v1.0.0"
+  CYPRESS_REF: "cctc_v1.0.0"
   EM_NAME: "highlight_dq_rules"
   EM_VERSION: "v1.0.1"
 
@@ -35,7 +35,7 @@ jobs:
         env:
           GH_PAT: ${{ secrets.CCTC_TEAM_PAT }}
         run: |
-          git clone --branch ${{ env.CYPRESS_BRANCH }} --depth=1 \
+          git clone --branch ${{ env.CYPRESS_REF }} --depth=1 \
             https://x-access-token:${GH_PAT}@github.com/CCTC-team/redcap_cypress.git
           cd redcap_cypress && git log -1
 
@@ -63,7 +63,7 @@ jobs:
         env:
           GH_PAT: ${{ secrets.CCTC_TEAM_PAT }}
         run: |
-          git clone --branch ${{ env.CCTC_DOCKER_BRANCH }} --depth=1 \
+          git clone --branch ${{ env.CCTC_DOCKER_REF }} --depth=1 \
             https://x-access-token:${GH_PAT}@github.com/CCTC-team/CCTC_REDCap_Docker.git
           cd CCTC_REDCap_Docker && git log -1
 
