@@ -194,26 +194,6 @@ jobs:
           ln -sfn "$GITHUB_WORKSPACE/redcap_cypress/node_modules" "$TARGET"
           ls -la "$TARGET/@badeball/cypress-cucumber-preprocessor" >/dev/null
 
-      - name: Patch rctf after:run handler
-        working-directory: redcap_cypress
-        run: |
-          # rctf's plugins/index.js calls afterRunHandler(config) without
-          # forwarding `results`, which throws inside cypress-cucumber-preprocessor
-          # ('totalFailed' in undefined) and can hang cypress.run(). Fix in place
-          # so the retry loop in scripts/rerun-failed.js never has to recover from it.
-          FILE=node_modules/rctf/plugins/index.js
-          if [ ! -f "$FILE" ]; then
-            echo "::error::$FILE missing — rctf install failed"
-            exit 1
-          fi
-          if grep -q 'afterRunHandler(config, results);' "$FILE"; then
-            echo "rctf already patched — nothing to do."
-          else
-            sed -i 's|afterRunHandler(config);|afterRunHandler(config, results);|' "$FILE"
-            echo "Patched $FILE:"
-            grep -n 'afterRunHandler' "$FILE"
-          fi
-
       - name: Build EM-scoped spec list (E.124.*)
         id: specs
         working-directory: redcap_cypress
