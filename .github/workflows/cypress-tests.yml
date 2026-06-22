@@ -271,3 +271,39 @@ jobs:
         run: |
           cd CCTC_REDCap_Docker/redcap_docker
           docker compose down -v
+
+  prune-artifacts:
+    needs: cypress-tests
+    if: always()
+    runs-on: ubuntu-latest
+    permissions:
+      actions: write
+    env:
+      KEEP_RUNS: "2"   # keep the latest run + the one before it
+    steps:
+      - name: Delete artifacts from older runs
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+        run: |
+          # Distinct run IDs that still have live artifacts, newest first
+          RUN_IDS=$(gh api "repos/${REPO}/actions/artifacts" --paginate \
+            --jq '.artifacts[] | select(.expired==false) | [.workflow_run.id, .created_at] | @tsv' \
+            | awk -F'\t' '{ if($2>seen[$1]) seen[$1]=$2 } END { for(r in seen) print seen[r]"\t"r }' \
+            | sort -r | awk -F'\t' '{print $2}')
+
+          KEEP_SET=$(echo "$RUN_IDS" | head -n "$KEEP_RUNS" | paste -sd, -)
+          echo "Keeping artifacts from runs: ${KEEP_SET:-<none>}"
+
+          gh api "repos/${REPO}/actions/artifacts" --paginate \
+            --jq '.artifacts[] | select(.expired==false) | [.workflow_run.id, .id, .name] | @tsv' \
+            | while IFS=$'\t' read -r runid artid name; do
+                case ",$KEEP_SET," in
+                  *",$runid,"*) ;;  # within the keep window — leave it
+                  *)
+                    echo "Deleting $name (run $runid, artifact $artid)"
+                    gh api -X DELETE "repos/${REPO}/actions/artifacts/${artid}" \
+                      && echo "  ok" || echo "  failed (continuing)"
+                    ;;
+                esac
+              done
