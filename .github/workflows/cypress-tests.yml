@@ -11,15 +11,26 @@ on:
       - 'docs/**'
   workflow_dispatch:
 
+# Cancel an in-progress run when a newer commit is pushed to the same ref, so
+# stacked pushes don't each consume a full run of Actions minutes.
+concurrency:
+  group: cypress-${{ github.ref }}
+  cancel-in-progress: true
+
 env:
-  CCTC_DOCKER_REF: "v1.0.0"
+  CCTC_DOCKER_REF: "v1.0.3"
   CYPRESS_REF: "cctc_v1.0.2"
   EM_NAME: "highlight_dq_rules"
   EM_VERSION: "v1.0.1"
+  REGISTRY: ghcr.io
+  # Pinned Cypress runner image (published by redcap_cypress/build-cypress-runner.yml).
+  # The suite runs INSIDE this container so the runtime is identical to local
+  # run.sh/run-ci.sh and to the main harness CI.
+  CYPRESS_RUNNER_IMAGE: ghcr.io/cctc-team/redcap_cypress/cypress-runner:15.10.0
 
 jobs:
   cypress-tests:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 120
     permissions:
       contents: read
@@ -27,7 +38,7 @@ jobs:
 
     steps:
       - name: Checkout Highlight DQ Rules EM
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
         with:
           path: highlight_dq_rules_em
 
@@ -53,11 +64,15 @@ jobs:
           echo "DB_PORT=${DB_PORT}" >> $GITHUB_ENV
 
       - name: Setup Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v5
         with:
           node-version: '20'
           cache: 'npm'
           cache-dependency-path: redcap_cypress/package-lock.json
+
+      # The Cypress binary is baked into the runner image (cypress/included), and
+      # xmllint ships in it too — so the host no longer needs the binary cache or a
+      # libxml2-utils install. The suite runs inside the container (see below).
 
       - name: Clone CCTC_REDCap_Docker
         env:
@@ -121,7 +136,21 @@ jobs:
       - name: Symlink redcap_source to workspace root for Cypress
         run: ln -s CCTC_REDCap_Docker/redcap_source redcap_source
 
-      - name: Build and start Docker services
+      - name: Log in to GitHub Container Registry
+        run: |
+          # The prebuilt redcap-env image (published by CCTC_REDCap_Docker) is a private
+          # GHCR package, so authenticate before pulling. CCTC_TEAM_PAT must have
+          # read:packages scope. If the package is made public, this step can be removed.
+          echo "${{ secrets.CCTC_TEAM_PAT }}" | docker login ${{ env.REGISTRY }} -u ${{ github.actor }} --password-stdin
+
+      - name: Pull prebuilt image and start Docker services
+        env:
+          # The prebuilt image bakes REDCap source at build time, so it does NOT contain
+          # the EM under test. docker-compose.em.yml bind-mounts the injected EM into the
+          # image's modules dir at runtime (no rebuild); the EM's own automated_tests
+          # steps then enable it, exactly as the old bake-it-in build flow did.
+          EM_HOST_PATH: ${{ github.workspace }}/CCTC_REDCap_Docker/redcap_source/modules/${{ env.EM_NAME }}_${{ env.EM_VERSION }}
+          EM_DIR: ${{ env.EM_NAME }}_${{ env.EM_VERSION }}
         run: |
           cd CCTC_REDCap_Docker/redcap_docker
 
@@ -131,8 +160,19 @@ jobs:
           echo "=== .env ==="
           cat .env
 
-          docker compose build
-          docker compose up -d
+          # Pull the shared prebuilt REDCap image (built by CCTC_REDCap_Docker) instead of
+          # rebuilding from source — every run uses the byte-identical image, removing
+          # build time and build-variance as a flakiness source. The EM under test is
+          # layered in via docker-compose.em.yml (bind mount) rather than baked.
+          COMPOSE="-f docker-compose.yml -f docker-compose.prebuilt.yml -f docker-compose.em.yml"
+
+          echo "EM mounted from: $EM_HOST_PATH -> /var/www/html/modules/$EM_DIR"
+          ls -la "$EM_HOST_PATH" | head
+
+          docker compose $COMPOSE pull app
+
+          # Start all services using the pulled image + the EM bind mount
+          docker compose $COMPOSE up -d
 
       - name: Wait for services to be ready
         run: |
@@ -171,6 +211,11 @@ jobs:
 
       - name: Install Cypress and dependencies
         working-directory: redcap_cypress
+        env:
+          # The host only uses node_modules for spec discovery and report generation;
+          # the suite itself runs inside the runner container, which has its own baked
+          # Cypress binary. Skip the host binary download.
+          CYPRESS_INSTALL_BINARY: '0'
         run: |
           # npm ci installs exactly the committed package-lock.json (deterministic,
           # matched esbuild) instead of `npm install` + `redcap_rsvc:install`, whose
@@ -189,7 +234,9 @@ jobs:
           # `require('@badeball/cypress-cucumber-preprocessor')`. esbuild walks
           # up from that file looking for node_modules — but the EM lives
           # outside redcap_cypress, so it never finds the install. Symlink
-          # node_modules next to the EM so the require resolves.
+          # node_modules next to the EM so the require resolves. The link target is
+          # absolute under $GITHUB_WORKSPACE, which is bind-mounted at the same path
+          # inside the runner container, so it resolves there too.
           TARGET="CCTC_REDCap_Docker/redcap_source/modules/${{ env.EM_NAME }}_${{ env.EM_VERSION }}/node_modules"
           ln -sfn "$GITHUB_WORKSPACE/redcap_cypress/node_modules" "$TARGET"
           ls -la "$TARGET/@badeball/cypress-cucumber-preprocessor" >/dev/null
@@ -208,24 +255,49 @@ jobs:
 
       - name: Run Cypress tests for Highlight DQ Rules EM
         if: steps.specs.outputs.spec_count != '0'
-        working-directory: redcap_cypress
         env:
           CYPRESS_RECORD_KEY: ${{ secrets.CYPRESS_RECORD_KEY }}
-          CYPRESS_prettyEnabled: 'true'
-          CYPRESS_BROWSER: chrome
-          CYPRESS_MAX_ATTEMPTS: '3'
-          CYPRESS_GROUP_PREFIX: highlight-dq-rules-em
-          CYPRESS_DISABLE_RECORDING: '1'
-          # Watchdog: if no new spec report appears for 15 min, treat as hung.
-          CYPRESS_STALL_MS: '900000'
         run: |
-          export UID
-          npm run test:retry-failed -- --spec-file shard-specs.txt
+          # Run the suite INSIDE the pinned runner image (same image as local
+          # run.sh/run-ci.sh) so the test runtime — Node, Cypress, and a Linux
+          # chromium — is identical here and locally, removing host-vs-container
+          # runtime drift as a flakiness source. The host scaffolding above already
+          # started the REDCap stack, injected the EM, and wrote cypress.config.js /
+          # cypress.env.json into the cloned harness; the container sees them via the
+          # workspace bind mount.
+          #
+          #   --network host    -> baseUrl https://localhost:8443 reaches redcap-app,
+          #                        exactly as the host-native runner did.
+          #   docker socket     -> the docker-exec mysql/file tasks work unchanged.
+          #   workspace at its   -> cypress.env.json's absolute ${{ github.workspace }}
+          #     own path            paths (redcap_source_path, edocs) resolve inside.
+          #   -w .../redcap_cypress -> the harness clone is the Cypress project root.
+          docker run --rm \
+            --network host \
+            --shm-size=2g \
+            -v /var/run/docker.sock:/var/run/docker.sock \
+            -v "${GITHUB_WORKSPACE}":"${GITHUB_WORKSPACE}" \
+            -w "${GITHUB_WORKSPACE}/redcap_cypress" \
+            -e UID="$(id -u)" \
+            -e CYPRESS_RECORD_KEY \
+            -e CYPRESS_prettyEnabled=true \
+            -e CYPRESS_BROWSER=chromium \
+            -e CYPRESS_MAX_ATTEMPTS=3 \
+            -e CYPRESS_GROUP_PREFIX=highlight-dq-rules-em \
+            -e CYPRESS_DISABLE_RECORDING=1 \
+            -e CYPRESS_STALL_MS=900000 \
+            "${CYPRESS_RUNNER_IMAGE}" \
+            npm run test:retry-failed -- --spec-file shard-specs.txt
 
       - name: Generate combined HTML report
         if: always()
         working-directory: redcap_cypress
         run: |
+          # The suite runs inside the cypress-runner container as root, so everything
+          # it wrote under cypress/results/ is root-owned. `npm run report` runs here on
+          # the host as the non-root runner user and would hit EACCES writing the merged
+          # report into that root-owned tree. Reclaim ownership first (passwordless sudo).
+          sudo chown -R "$(id -u):$(id -g)" cypress/results 2>/dev/null || true
           if ls cypress/results/json/*.json >/dev/null 2>&1; then
             npm run report
             REPORT_BASENAME="${{ env.EM_NAME }}_${{ env.EM_VERSION }}-test-report"
@@ -237,7 +309,7 @@ jobs:
           fi
 
       - name: Upload mochawesome reports
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         if: always()
         with:
           name: ${{ env.EM_NAME }}_${{ env.EM_VERSION }}-cypress-results
@@ -245,37 +317,61 @@ jobs:
             redcap_cypress/cypress/results/json/*.json
             redcap_cypress/cypress/results/${{ env.EM_NAME }}_${{ env.EM_VERSION }}-test-report.json
             redcap_cypress/cypress/results/html/${{ env.EM_NAME }}_${{ env.EM_VERSION }}-test-report.html
-          retention-days: 30
+          retention-days: 7
           if-no-files-found: warn
 
-      - name: Upload Cypress videos
-        uses: actions/upload-artifact@v4
+      - name: Generate coverage report
         if: always()
-        with:
-          name: ${{ env.EM_NAME }}_${{ env.EM_VERSION }}-cypress-videos
-          path: redcap_cypress/cypress/videos/
-          retention-days: 30
-          if-no-files-found: warn
+        run: |
+          if docker exec redcap-app test -f /var/www/html/phpcov.phar 2>/dev/null; then
+            mkdir -p /tmp/path/coverage-report
+            # Merge the per-request .cov files (written by the auto_prepend recorder
+            # baked into the redcap-env image) into a single clover report INSIDE the
+            # container...
+            docker exec redcap-app sh -c "mkdir -p /tmp/path/coverage-report && \
+              php /var/www/html/phpcov.phar merge \
+                --clover /tmp/path/coverage-report/coverage.xml \
+                /tmp/path/coverage" || echo "Coverage report generation failed"
+            # ...then copy it out to the host, because the upload step reads the host
+            # path and the container's /tmp is a separate filesystem (no bind mount).
+            docker cp redcap-app:/tmp/path/coverage-report/. /tmp/path/coverage-report/ 2>/dev/null \
+              || echo "No coverage report produced to copy out"
+          else
+            echo "phpcov.phar not found, skipping coverage report"
+          fi
 
       - name: Upload Cypress screenshots
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         if: failure()
         with:
           name: ${{ env.EM_NAME }}_${{ env.EM_VERSION }}-cypress-screenshots
           path: redcap_cypress/cypress/screenshots/
-          retention-days: 30
+          retention-days: 7
           if-no-files-found: warn
+
+      - name: Upload coverage reports
+        uses: actions/upload-artifact@v7
+        if: always()
+        with:
+          name: ${{ env.EM_NAME }}_${{ env.EM_VERSION }}-coverage-reports
+          path: /tmp/path/coverage-report/
+          retention-days: 7
+          if-no-files-found: ignore
 
       - name: Cleanup
         if: always()
         run: |
           cd CCTC_REDCap_Docker/redcap_docker
-          docker compose down -v
+          docker compose -f docker-compose.yml -f docker-compose.prebuilt.yml down -v
 
+  # Prune Actions artifact storage: keep only the N most recent workflow runs'
+  # artifacts and delete everything older, to stay under the org's 2 GB Actions
+  # storage quota. Runs after the test job so the current run's artifacts
+  # already exist and are counted among the kept runs.
   prune-artifacts:
     needs: cypress-tests
     if: always()
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     permissions:
       actions: write
     env:
@@ -307,3 +403,70 @@ jobs:
                     ;;
                 esac
               done
+
+  # Merge the suite's mochawesome JSON into ONE combined HTML report and publish it
+  # to GitHub Pages, so each run links to a single browsable report (suites, failures,
+  # embedded screenshots) instead of a downloadable zip.
+  publish-report:
+    needs: cypress-tests
+    if: always()
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: read
+      pages: write          # publish to Pages
+      id-token: write       # OIDC token deploy-pages uses to authenticate
+    # Pages allows only one in-flight deployment; serialise (don't cancel) so
+    # overlapping runs don't clobber each other mid-deploy.
+    concurrency:
+      group: pages
+      cancel-in-progress: false
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Setup Node.js
+        uses: actions/setup-node@v5
+        with:
+          node-version: '20'
+
+      - name: Configure Pages
+        # enablement: true turns Pages on via the API on first run, so the repo
+        # doesn't need a manual Settings -> Pages change first.
+        uses: actions/configure-pages@v6
+        with:
+          enablement: true
+
+      - name: Download the suite's mochawesome results
+        uses: actions/download-artifact@v8
+        with:
+          pattern: '*-cypress-results'   # the per-suite results artifact only
+          merge-multiple: true           # flatten into one tree
+          path: collected
+
+      - name: Merge into one combined HTML report
+        run: |
+          shopt -s nullglob
+          jsons=(collected/json/*.json)
+          mkdir -p site
+          if [ ${#jsons[@]} -eq 0 ]; then
+            echo "::warning::No mochawesome JSON found — publishing a placeholder page."
+            printf '<!doctype html><title>No results</title><h1>No test results were produced this run.</h1>' > site/index.html
+          else
+            echo "Merging ${#jsons[@]} per-spec JSON file(s)..."
+            # Versions pinned to match package.json so the combined report renders
+            # identically to the per-spec ones.
+            npx --yes mochawesome-merge@5.1.1 collected/json/*.json -o collected/combined.json
+            npx --yes mochawesome-report-generator@6.3.2 collected/combined.json \
+              --reportDir site --reportFilename index --inline \
+              --reportTitle "Highlight DQ Rules EM — combined report" \
+              --reportPageTitle "Highlight DQ Rules EM Cypress results"
+          fi
+
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@v5
+        with:
+          path: site
+
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v5
