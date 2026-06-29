@@ -237,8 +237,13 @@ jobs:
           # node_modules next to the EM so the require resolves. The link target is
           # absolute under $GITHUB_WORKSPACE, which is bind-mounted at the same path
           # inside the runner container, so it resolves there too.
+          #
+          # sudo: the EM dir is bind-mounted :rw into redcap-app, whose entrypoint runs
+          # `chown -R www-data /var/www/html/modules` on boot — that reassigns the host
+          # EM dir to uid 33, so the non-root runner can no longer write into it. Create
+          # the link as root; the in-container (root) esbuild reads it fine.
           TARGET="CCTC_REDCap_Docker/redcap_source/modules/${{ env.EM_NAME }}_${{ env.EM_VERSION }}/node_modules"
-          ln -sfn "$GITHUB_WORKSPACE/redcap_cypress/node_modules" "$TARGET"
+          sudo ln -sfn "$GITHUB_WORKSPACE/redcap_cypress/node_modules" "$TARGET"
           ls -la "$TARGET/@badeball/cypress-cucumber-preprocessor" >/dev/null
 
       - name: Build EM-scoped spec list (E.124.*)
