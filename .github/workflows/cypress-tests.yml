@@ -1,5 +1,27 @@
 name: Highlight DQ Rules EM Cypress Tests
 
+# Two-image stack pipeline: runs this module's own automated_tests (E.124.*)
+# against the all-in-one REDCap image (redcap-aio) using the self-contained
+# cypress-runner-aio image. No 3-container compose, no host npm ci, no workspace
+# bind-mount of the harness — the AIO container IS REDCap+MariaDB+MailHog and the
+# runner is fully baked. This replaces the old redcap_docker + docker-compose.em
+# bind-mount + host-scaffolding flow.
+#
+# How the EM under test gets in: the published redcap-aio image bakes a REDCap
+# source that may or may not include this module; we bind-mount THIS commit's EM
+# over the container's modules/ dir so REDCap serves the code under test (no
+# rebuild). The E.124 specs enable and configure the module themselves. This
+# module ships its own automated_tests/step_definitions/external_module.js; the
+# runner copies the whole module dir out and the preprocessor picks the step
+# defs up in place, so no extra workflow scaffolding is needed.
+#
+# Images (published by CCTC_REDCap_Docker/build-redcap-aio.yml and
+# redcap_cypress/build-cypress-runner-aio.yml). They must be built for the SAME
+# REDCap version — the runner docker-cp's that version's install SQL out of the
+# AIO container at runtime.
+#   ghcr.io/cctc-team/cctc_redcap_docker/redcap-aio:latest
+#   ghcr.io/cctc-team/redcap_cypress/cypress-runner-aio:latest
+
 on:
   push:
     branches:
@@ -18,15 +40,16 @@ concurrency:
   cancel-in-progress: true
 
 env:
-  CCTC_DOCKER_REF: "v1.0.3"
-  CYPRESS_REF: "cctc_v1.0.2"
+  REGISTRY: ghcr.io
   EM_NAME: "highlight_dq_rules"
   EM_VERSION: "v1.0.1"
-  REGISTRY: ghcr.io
-  # Pinned Cypress runner image (published by redcap_cypress/build-cypress-runner.yml).
-  # The suite runs INSIDE this container so the runtime is identical to local
-  # run.sh/run-ci.sh and to the main harness CI.
-  CYPRESS_RUNNER_IMAGE: ghcr.io/cctc-team/redcap_cypress/cypress-runner:15.10.0
+  # Module directory name REDCap discovers it by (<prefix>_v<version>). Also the
+  # runner's EM_MODULE: it copies this dir's automated_tests out of the container
+  # and runs only its E.124.* specs.
+  EM_MODULE: "highlight_dq_rules_v1.0.1"
+  REDCAP_CONTAINER: CCTC_REDCap_Docker
+  AIO_IMAGE: ghcr.io/cctc-team/cctc_redcap_docker/redcap-aio:latest
+  RUNNER_IMAGE: ghcr.io/cctc-team/redcap_cypress/cypress-runner-aio:latest
 
 jobs:
   cypress-tests:
@@ -34,7 +57,7 @@ jobs:
     timeout-minutes: 120
     permissions:
       contents: read
-      checks: write
+      packages: read
 
     steps:
       - name: Checkout Highlight DQ Rules EM
@@ -42,332 +65,107 @@ jobs:
         with:
           path: highlight_dq_rules_em
 
-      - name: Clone redcap_cypress
-        env:
-          GH_PAT: ${{ secrets.CCTC_TEAM_PAT }}
-        run: |
-          git clone --branch ${{ env.CYPRESS_REF }} --depth=1 \
-            https://x-access-token:${GH_PAT}@github.com/CCTC-team/redcap_cypress.git
-          cd redcap_cypress && git log -1
-
-      - name: Read config from cypress.env.json.example
-        working-directory: redcap_cypress
-        run: |
-          REDCAP_VERSION=$(jq -r '.redcap_version' cypress.env.json.example)
-          DB_CONTAINER=$(jq -r '.mysql.docker_container' cypress.env.json.example)
-          DB_HOST=$(jq -r '.mysql.host' cypress.env.json.example)
-          DB_PORT=$(jq -r '.mysql.port' cypress.env.json.example)
-
-          echo "REDCAP_VERSION=${REDCAP_VERSION}" >> $GITHUB_ENV
-          echo "DB_CONTAINER=${DB_CONTAINER}" >> $GITHUB_ENV
-          echo "DB_HOST=${DB_HOST}" >> $GITHUB_ENV
-          echo "DB_PORT=${DB_PORT}" >> $GITHUB_ENV
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v5
-        with:
-          node-version: '20'
-          cache: 'npm'
-          cache-dependency-path: redcap_cypress/package-lock.json
-
-      # The Cypress binary is baked into the runner image (cypress/included), and
-      # xmllint ships in it too — so the host no longer needs the binary cache or a
-      # libxml2-utils install. The suite runs inside the container (see below).
-
-      - name: Clone CCTC_REDCap_Docker
-        env:
-          GH_PAT: ${{ secrets.CCTC_TEAM_PAT }}
-        run: |
-          git clone --branch ${{ env.CCTC_DOCKER_REF }} --depth=1 \
-            https://x-access-token:${GH_PAT}@github.com/CCTC-team/CCTC_REDCap_Docker.git
-          cd CCTC_REDCap_Docker && git log -1
-
-      - name: Get REDCap Source
-        env:
-          GH_PAT: ${{ secrets.CCTC_TEAM_PAT }}
-        run: |
-          if [ -z "$GH_PAT" ]; then
-            echo "::error::No PAT available for cloning CCTC-team/redcap_source."
-            echo "Set repo secret CCTC_TEAM_PAT on this repository."
-            exit 1
-          fi
-
-          if [[ "${{ env.REDCAP_VERSION }}" = "99.99.99" ]]; then
-            export BRANCH=main
-          else
-            export BRANCH=${{ env.REDCAP_VERSION }}
-          fi
-
-          # Verify the PAT can actually see redcap_source before attempting the clone,
-          # so a permission problem produces an explicit error instead of git's generic
-          # "Invalid username or token" message.
-          HTTP_CODE=$(curl -s -o /dev/null -w '%{http_code}' \
-            -H "Authorization: Bearer ${GH_PAT}" \
-            -H "Accept: application/vnd.github+json" \
-            https://api.github.com/repos/CCTC-team/redcap_source)
-          if [ "$HTTP_CODE" != "200" ]; then
-            echo "::error::CCTC_TEAM_PAT cannot access CCTC-team/redcap_source (HTTP $HTTP_CODE)."
-            echo "Grant CCTC_TEAM_PAT 'Contents: Read' access to CCTC-team/redcap_source."
-            exit 1
-          fi
-
-          cd CCTC_REDCap_Docker/redcap_source
-
-          git clone --depth=1 --branch=$BRANCH \
-            https://x-access-token:${GH_PAT}@github.com/CCTC-team/redcap_source.git _clone
-          git -C _clone log -1
-
-          cp -a _clone/* _clone/.* . 2>/dev/null || true
-          rm -rf _clone .git
-
-          echo "=== redcap_source contents ==="
-          ls -la
-
-      - name: Inject Highlight DQ Rules EM under test
-        run: |
-          TARGET="CCTC_REDCap_Docker/redcap_source/modules/${{ env.EM_NAME }}_${{ env.EM_VERSION }}"
-          rm -rf "$TARGET"
-          mkdir -p "$(dirname "$TARGET")"
-          cp -a highlight_dq_rules_em "$TARGET"
-          rm -rf "$TARGET/.git" "$TARGET/.github"
-          echo "=== EM injected at $TARGET ==="
-          ls -la "$TARGET"
-
-      - name: Symlink redcap_source to workspace root for Cypress
-        run: ln -s CCTC_REDCap_Docker/redcap_source redcap_source
-
       - name: Log in to GitHub Container Registry
+        # The redcap-aio / cypress-runner-aio packages are private GHCR images;
+        # CCTC_TEAM_PAT needs read:packages. If they're made public, drop this.
+        run: echo "${{ secrets.CCTC_TEAM_PAT }}" | docker login "${REGISTRY}" -u ${{ github.actor }} --password-stdin
+
+      - name: Pull stack images
         run: |
-          # The prebuilt redcap-env image (published by CCTC_REDCap_Docker) is a private
-          # GHCR package, so authenticate before pulling. CCTC_TEAM_PAT must have
-          # read:packages scope. If the package is made public, this step can be removed.
-          echo "${{ secrets.CCTC_TEAM_PAT }}" | docker login ${{ env.REGISTRY }} -u ${{ github.actor }} --password-stdin
+          docker pull "${AIO_IMAGE}"
+          docker pull "${RUNNER_IMAGE}"
 
-      - name: Pull prebuilt image and start Docker services
-        env:
-          # The prebuilt image bakes REDCap source at build time, so it does NOT contain
-          # the EM under test. docker-compose.em.yml bind-mounts the injected EM into the
-          # image's modules dir at runtime (no rebuild); the EM's own automated_tests
-          # steps then enable it, exactly as the old bake-it-in build flow did.
-          EM_HOST_PATH: ${{ github.workspace }}/CCTC_REDCap_Docker/redcap_source/modules/${{ env.EM_NAME }}_${{ env.EM_VERSION }}
-          EM_DIR: ${{ env.EM_NAME }}_${{ env.EM_VERSION }}
+      - name: Stage EM under test
         run: |
-          cd CCTC_REDCap_Docker/redcap_docker
+          # Strip VCS/CI dirs so only the module payload is mounted into REDCap.
+          rm -rf highlight_dq_rules_em/.git highlight_dq_rules_em/.github
+          echo "=== EM contents (mounted into REDCap as modules/${EM_MODULE}) ==="
+          ls -la highlight_dq_rules_em
 
-          cp .env.example .env
-          sed -i 's/REDCAP_VERSION=.*/REDCAP_VERSION=${{ env.REDCAP_VERSION }}/' .env
-
-          echo "=== .env ==="
-          cat .env
-
-          # Pull the shared prebuilt REDCap image (built by CCTC_REDCap_Docker) instead of
-          # rebuilding from source — every run uses the byte-identical image, removing
-          # build time and build-variance as a flakiness source. The EM under test is
-          # layered in via docker-compose.em.yml (bind mount) rather than baked.
-          COMPOSE="-f docker-compose.yml -f docker-compose.prebuilt.yml -f docker-compose.em.yml"
-
-          echo "EM mounted from: $EM_HOST_PATH -> /var/www/html/modules/$EM_DIR"
-          ls -la "$EM_HOST_PATH" | head
-
-          docker compose $COMPOSE pull app
-
-          # Start all services using the pulled image + the EM bind mount
-          docker compose $COMPOSE up -d
-
-      - name: Wait for services to be ready
+      - name: Start all-in-one REDCap (with EM under test)
         run: |
-          echo "Waiting for MariaDB to be ready..."
-          timeout 120 bash -c 'until docker exec ${{ env.DB_CONTAINER }} mysqladmin ping -h localhost --silent 2>/dev/null; do sleep 2; done'
-
-          echo "Waiting for REDCap to be ready..."
-          timeout 120 bash -c 'until curl -k -s -f https://localhost:8443 > /dev/null 2>&1; do sleep 2; done'
-
-          echo "Services are ready!"
-          docker ps -a
-
-      - name: Set permissions for eDocs & Temp folders
-        run: |
-          mkdir -p CCTC_REDCap_Docker/redcap_source/edocs
-          mkdir -p CCTC_REDCap_Docker/redcap_source/temp
-          sudo chmod -R 777 CCTC_REDCap_Docker/redcap_source/edocs
-          sudo chmod -R 777 CCTC_REDCap_Docker/redcap_source/temp
-
-      - name: Configure Cypress environment
-        working-directory: redcap_cypress
-        env:
-          PROJECT_ID: ${{ secrets.PROJECT_ID }}
-        run: |
-          sed "s/PID/$PROJECT_ID/g" cypress.config.js.example > cypress.config.js
-          cp cypress.env.json.example cypress.env.json
-
-          sed -i '/"path":/c\    "path": "docker exec -i ${{ env.DB_CONTAINER }} mysql",' cypress.env.json
-          sed -i '/"port":/c\    "port": "3306",' cypress.env.json
-
-          sed -i '/"temp_folder":/a\  "edocs_folder": "${{ github.workspace }}/CCTC_REDCap_Docker/redcap_source/edocs",' cypress.env.json
-          sed -i '/"redcap_version":/a\  "redcap_source_path": "${{ github.workspace }}/CCTC_REDCap_Docker/redcap_source",' cypress.env.json
-
-          echo "=== cypress.env.json ==="
-          cat cypress.env.json
-
-      - name: Install Cypress and dependencies
-        working-directory: redcap_cypress
-        env:
-          # The host only uses node_modules for spec discovery and report generation;
-          # the suite itself runs inside the runner container, which has its own baked
-          # Cypress binary. Skip the host binary download.
-          CYPRESS_INSTALL_BINARY: '0'
-        run: |
-          # npm ci installs exactly the committed package-lock.json (deterministic,
-          # matched esbuild) instead of `npm install` + `redcap_rsvc:install`, whose
-          # `clean` deleted package-lock.json and reinstalled lockless — that drift
-          # caused esbuild's "Expected id 3 but got id 2" crash at config load.
-          npm ci
-          # move_files copies redcap_rsvc/Files fixtures into cypress/fixtures (most
-          # fixtures live in redcap_rsvc, not the EM repo). Non-destructive half of
-          # redcap_rsvc:install — keeps the lockfile. Without it cypress/fixtures is
-          # empty and specs hang until the stall watchdog kills CI.
-          npm run redcap_rsvc:move_files
-
-      - name: Expose redcap_cypress node_modules to EM step_definitions
-        run: |
-          # The EM ships its own step_definitions/external_module.js, which
-          # `require('@badeball/cypress-cucumber-preprocessor')`. esbuild walks
-          # up from that file looking for node_modules — but the EM lives
-          # outside redcap_cypress, so it never finds the install. Symlink
-          # node_modules next to the EM so the require resolves. The link target is
-          # absolute under $GITHUB_WORKSPACE, which is bind-mounted at the same path
-          # inside the runner container, so it resolves there too.
+          # The AIO image is self-contained (REDCap + MariaDB + MailHog via
+          # supervisord); REDCAP_VERSION is baked and every other setting defaults,
+          # so no env/compose is needed. Publish only what the runner reaches over
+          # host networking (HTTPS + MailHog UI); DB/file access is via docker exec.
           #
-          # sudo: the EM dir is bind-mounted :rw into redcap-app, whose entrypoint runs
-          # `chown -R www-data /var/www/html/modules` on boot — that reassigns the host
-          # EM dir to uid 33, so the non-root runner can no longer write into it. Create
-          # the link as root; the in-container (root) esbuild reads it fine.
-          TARGET="CCTC_REDCap_Docker/redcap_source/modules/${{ env.EM_NAME }}_${{ env.EM_VERSION }}/node_modules"
-          sudo ln -sfn "$GITHUB_WORKSPACE/redcap_cypress/node_modules" "$TARGET"
-          ls -la "$TARGET/@badeball/cypress-cucumber-preprocessor" >/dev/null
+          # Bind-mount THIS commit's EM over the image's modules/ dir so the running
+          # REDCap serves the code under test — no rebuild, exactly like the old
+          # docker-compose.em.yml overlay did.
+          docker run -d --name "${REDCAP_CONTAINER}" \
+            -p 8443:8443 -p 8025:8025 \
+            -v cctc_mariadb_data:/var/lib/mysql \
+            -v "${GITHUB_WORKSPACE}/highlight_dq_rules_em:/var/www/html/modules/${EM_MODULE}" \
+            "${AIO_IMAGE}"
 
-      - name: Build EM-scoped spec list (E.124.*)
-        id: specs
-        working-directory: redcap_cypress
+      - name: Wait for REDCap
         run: |
-          find ../redcap_source/modules/${{ env.EM_NAME }}_${{ env.EM_VERSION }}/automated_tests \
-               -type f -name 'E.124.*.feature' ! -iname '*REDUNDANT*' \
-            | sort -u > shard-specs.txt
-          SPEC_COUNT=$(wc -l < shard-specs.txt | tr -d ' ')
-          echo "spec_count=${SPEC_COUNT}" >> $GITHUB_OUTPUT
-          echo "Will run ${SPEC_COUNT} highlight_dq_rules specs:"
-          cat shard-specs.txt
+          echo "Waiting for REDCap (first boot initialises the DB)..."
+          timeout 360 bash -c 'until curl -k -s -f https://localhost:8443 > /dev/null 2>&1; do sleep 3; done'
+          echo "REDCap is up."
+          docker ps
 
-      - name: Run Cypress tests for Highlight DQ Rules EM
-        if: steps.specs.outputs.spec_count != '0'
-        env:
-          CYPRESS_RECORD_KEY: ${{ secrets.CYPRESS_RECORD_KEY }}
+      - name: Run Highlight DQ Rules EM specs (E.124.*)
         run: |
-          # Run the suite INSIDE the pinned runner image (same image as local
-          # run.sh/run-ci.sh) so the test runtime — Node, Cypress, and a Linux
-          # chromium — is identical here and locally, removing host-vs-container
-          # runtime drift as a flakiness source. The host scaffolding above already
-          # started the REDCap stack, injected the EM, and wrote cypress.config.js /
-          # cypress.env.json into the cloned harness; the container sees them via the
-          # workspace bind mount.
-          #
-          #   --network host    -> baseUrl https://localhost:8443 reaches redcap-app,
-          #                        exactly as the host-native runner did.
-          #   docker socket     -> the docker-exec mysql/file tasks work unchanged.
-          #   workspace at its   -> cypress.env.json's absolute ${{ github.workspace }}
-          #     own path            paths (redcap_source_path, edocs) resolve inside.
-          #   -w .../redcap_cypress -> the harness clone is the Cypress project root.
+          mkdir -p results screenshots
+          # The runner is self-contained. EM_MODULE tells it to copy this module's
+          # automated_tests out of the AIO container (docker cp, via the mounted
+          # socket) into its /work/redcap_source/modules/<EM_MODULE>/, then run only
+          # that module's *.feature specs (excluding *REDUNDANT*) with retries. It
+          # reaches REDCap's DB/files over the socket and the UI over host net.
+          # Reports land in the bind-mounted results/ dir.
           docker run --rm \
             --network host \
             --shm-size=2g \
             -v /var/run/docker.sock:/var/run/docker.sock \
-            -v "${GITHUB_WORKSPACE}":"${GITHUB_WORKSPACE}" \
-            -w "${GITHUB_WORKSPACE}/redcap_cypress" \
-            -e UID="$(id -u)" \
-            -e CYPRESS_RECORD_KEY \
-            -e CYPRESS_prettyEnabled=true \
-            -e CYPRESS_BROWSER=chromium \
+            -v "${PWD}/results:/work/redcap_cypress/cypress/results" \
+            -v "${PWD}/screenshots:/work/redcap_cypress/cypress/screenshots" \
+            -e EM_MODULE="${EM_MODULE}" \
+            -e CYPRESS_MYSQL_CONTAINER="${REDCAP_CONTAINER}" \
+            -e CYPRESS_REDCAP_CONTAINER="${REDCAP_CONTAINER}" \
+            -e CYPRESS_baseUrl="https://localhost:8443" \
+            -e RUNNER_BROWSER=chromium \
             -e CYPRESS_MAX_ATTEMPTS=3 \
+            -e CYPRESS_prettyEnabled=true \
             -e CYPRESS_GROUP_PREFIX=highlight-dq-rules-em \
             -e CYPRESS_DISABLE_RECORDING=1 \
             -e CYPRESS_STALL_MS=900000 \
-            "${CYPRESS_RUNNER_IMAGE}" \
-            npm run test:retry-failed -- --spec-file shard-specs.txt
+            "${RUNNER_IMAGE}"
 
-      - name: Generate combined HTML report
+      - name: Reclaim results ownership
         if: always()
-        working-directory: redcap_cypress
         run: |
-          # The suite runs inside the cypress-runner container as root, so everything
-          # it wrote under cypress/results/ is root-owned. `npm run report` runs here on
-          # the host as the non-root runner user and would hit EACCES writing the merged
-          # report into that root-owned tree. Reclaim ownership first (passwordless sudo).
-          sudo chown -R "$(id -u):$(id -g)" cypress/results 2>/dev/null || true
-          if ls cypress/results/json/*.json >/dev/null 2>&1; then
-            npm run report
-            REPORT_BASENAME="${{ env.EM_NAME }}_${{ env.EM_VERSION }}-test-report"
-            mv cypress/results/test-report.json "cypress/results/${REPORT_BASENAME}.json"
-            mv cypress/results/html/test-report.html "cypress/results/html/${REPORT_BASENAME}.html"
-            echo "Renamed merged report to ${REPORT_BASENAME}.{json,html}"
-          else
-            echo "::warning::No mochawesome JSON files were produced — Cypress likely failed before any spec ran."
-          fi
+          # The runner writes results as root; reclaim so upload-artifact can read.
+          sudo chown -R "$(id -u):$(id -g)" results 2>/dev/null || true
 
       - name: Upload mochawesome reports
         uses: actions/upload-artifact@v7
         if: always()
         with:
           name: ${{ env.EM_NAME }}_${{ env.EM_VERSION }}-cypress-results
+          # Replace this run's artifact on "Re-run failed jobs" (same run ID) so
+          # publish-report merges the fresh rerun JSON, not the stale failing one.
+          overwrite: true
           path: |
-            redcap_cypress/cypress/results/json/*.json
-            redcap_cypress/cypress/results/${{ env.EM_NAME }}_${{ env.EM_VERSION }}-test-report.json
-            redcap_cypress/cypress/results/html/${{ env.EM_NAME }}_${{ env.EM_VERSION }}-test-report.html
+            results/json/*.json
+            results/html/**
           retention-days: 7
           if-no-files-found: warn
-
-      - name: Generate coverage report
-        if: always()
-        run: |
-          if docker exec redcap-app test -f /var/www/html/phpcov.phar 2>/dev/null; then
-            mkdir -p /tmp/path/coverage-report
-            # Merge the per-request .cov files (written by the auto_prepend recorder
-            # baked into the redcap-env image) into a single clover report INSIDE the
-            # container...
-            docker exec redcap-app sh -c "mkdir -p /tmp/path/coverage-report && \
-              php /var/www/html/phpcov.phar merge \
-                --clover /tmp/path/coverage-report/coverage.xml \
-                /tmp/path/coverage" || echo "Coverage report generation failed"
-            # ...then copy it out to the host, because the upload step reads the host
-            # path and the container's /tmp is a separate filesystem (no bind mount).
-            docker cp redcap-app:/tmp/path/coverage-report/. /tmp/path/coverage-report/ 2>/dev/null \
-              || echo "No coverage report produced to copy out"
-          else
-            echo "phpcov.phar not found, skipping coverage report"
-          fi
 
       - name: Upload Cypress screenshots
         uses: actions/upload-artifact@v7
         if: failure()
         with:
           name: ${{ env.EM_NAME }}_${{ env.EM_VERSION }}-cypress-screenshots
-          path: redcap_cypress/cypress/screenshots/
-          retention-days: 7
-          if-no-files-found: warn
-
-      - name: Upload coverage reports
-        uses: actions/upload-artifact@v7
-        if: always()
-        with:
-          name: ${{ env.EM_NAME }}_${{ env.EM_VERSION }}-coverage-reports
-          path: /tmp/path/coverage-report/
+          path: screenshots/
           retention-days: 7
           if-no-files-found: ignore
 
       - name: Cleanup
         if: always()
         run: |
-          cd CCTC_REDCap_Docker/redcap_docker
-          docker compose -f docker-compose.yml -f docker-compose.prebuilt.yml down -v
+          docker rm -f "${REDCAP_CONTAINER}" 2>/dev/null || true
+          docker volume rm cctc_mariadb_data 2>/dev/null || true
 
   # Prune Actions artifact storage: keep only the N most recent workflow runs'
   # artifacts and delete everything older, to stay under the org's 2 GB Actions
@@ -451,15 +249,21 @@ jobs:
       - name: Merge into one combined HTML report
         run: |
           shopt -s nullglob
-          jsons=(collected/json/*.json)
           mkdir -p site
+          # Skip any unparseable JSON (e.g. a spec killed mid-write) so one bad
+          # file can't fail the whole combined report.
+          for f in collected/json/*.json; do
+            node -e "JSON.parse(require('fs').readFileSync(process.argv[1],'utf8'))" "$f" 2>/dev/null \
+              || { echo "::warning::Skipping unparseable mochawesome JSON: $f"; rm -f "$f"; }
+          done
+          jsons=(collected/json/*.json)
           if [ ${#jsons[@]} -eq 0 ]; then
             echo "::warning::No mochawesome JSON found — publishing a placeholder page."
             printf '<!doctype html><title>No results</title><h1>No test results were produced this run.</h1>' > site/index.html
           else
             echo "Merging ${#jsons[@]} per-spec JSON file(s)..."
-            # Versions pinned to match package.json so the combined report renders
-            # identically to the per-spec ones.
+            # Versions pinned to match the runner's report so the combined report
+            # renders identically to the per-spec ones.
             npx --yes mochawesome-merge@5.1.1 collected/json/*.json -o collected/combined.json
             npx --yes mochawesome-report-generator@6.3.2 collected/combined.json \
               --reportDir site --reportFilename index --inline \
