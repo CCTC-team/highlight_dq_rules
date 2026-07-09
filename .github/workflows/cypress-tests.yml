@@ -142,7 +142,7 @@ jobs:
         uses: actions/upload-artifact@v7
         if: always()
         with:
-          name: ${{ env.EM_NAME }}_${{ env.EM_VERSION }}-cypress-results
+          name: ${{ env.EM_NAME }}_${{ env.EM_VERSION }}
           # Replace this run's artifact on "Re-run failed jobs" (same run ID) so
           # publish-report merges the fresh rerun JSON, not the stale failing one.
           overwrite: true
@@ -156,7 +156,7 @@ jobs:
         uses: actions/upload-artifact@v7
         if: failure()
         with:
-          name: ${{ env.EM_NAME }}_${{ env.EM_VERSION }}-cypress-screenshots
+          name: ${{ env.EM_NAME }}_${{ env.EM_VERSION }}-screenshots
           path: screenshots/
           retention-days: 7
           if-no-files-found: ignore
@@ -242,7 +242,7 @@ jobs:
       - name: Download the suite's mochawesome results
         uses: actions/download-artifact@v8
         with:
-          pattern: '*-cypress-results'   # the per-suite results artifact only
+          pattern: ${{ env.EM_NAME }}_${{ env.EM_VERSION }}   # the per-suite results artifact only (not -screenshots)
           merge-multiple: true           # flatten into one tree
           path: collected
 
@@ -265,10 +265,13 @@ jobs:
             # Versions pinned to match the runner's report so the combined report
             # renders identically to the per-spec ones.
             npx --yes mochawesome-merge@5.1.1 collected/json/*.json -o collected/combined.json
+            # Name the report file <EM_NAME>_<EM_VERSION>.html (e.g. highlight_dq_rules_v1.0.1.html),
+            # then copy it to index.html so the Pages root URL still serves the report.
             npx --yes mochawesome-report-generator@6.3.2 collected/combined.json \
-              --reportDir site --reportFilename index --inline \
-              --reportTitle "Highlight DQ Rules EM — combined report" \
-              --reportPageTitle "Highlight DQ Rules EM Cypress results"
+              --reportDir site --reportFilename "${EM_NAME}_${EM_VERSION}" --inline \
+              --reportTitle "${EM_NAME}_${EM_VERSION}" \
+              --reportPageTitle "${EM_NAME}_${EM_VERSION}"
+            cp "site/${EM_NAME}_${EM_VERSION}.html" site/index.html
           fi
 
       - name: Upload Pages artifact
