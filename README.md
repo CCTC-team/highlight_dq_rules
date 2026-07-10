@@ -96,7 +96,7 @@ The module ships with a CI workflow at [.github/workflows/cypress-tests.yml](.gi
 7. Uploads the mochawesome reports (and, on failure, screenshots) as artifacts retained for 7 days.
 
 **Follow-on jobs**
-- `prune-artifacts` — deletes artifacts from older runs, keeping only the latest 2, to stay under the org's Actions storage quota.
+- `prune-artifacts` — deletes artifacts from older runs, keeping only the latest 2.
 - `publish-report` — merges the run's mochawesome JSON into one combined HTML report and publishes it to GitHub Pages (report named `highlight_dq_rules_v1.0.1.html`, also served at the Pages root as `index.html`).
 
 **Required repository secrets**
