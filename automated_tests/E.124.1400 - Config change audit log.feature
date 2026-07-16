@@ -61,16 +61,17 @@ Feature: E.124.1400 - The system shall record configuration changes for the High
     And I click on the button labeled "Close"
     Then I should see "External Module Logs"
 
-    # The second entry is the repeatable role list ((empty) -> two roles). Its stored
-    # value is REDCap role ids (e.g. ["3","2"]) which are global auto-increment and
-    # therefore not stable across a full suite run, so assert the setting name and
-    # that it started empty rather than the exact id array.
+    # The second entry is the repeatable role list ((empty) -> the two selected roles).
+    # rctf resets the database before each feature, so E.124.1400's roles get
+    # deterministic ids (DataEntry=1, DataManager=2, Monitor=3); the list stores ids in
+    # selection order, so DataManager (slot 1) then DataEntry (slot 2) is ["2","1"].
     When I click on the second button labeled "Show Parameters"
     Then I should see "Log Entry Parameters"
     And I should see a table header and row containing the following values in a table:
       | Name      | Value               |
       | setting   | user-roles-can-view |
       | old_value | (empty)             |
+      | new_value | ["2","1"]           |
 
   Scenario: Changing a setting logs an old->new audit entry
     # rctf starts each scenario from a clean browser page, so re-navigate to the
