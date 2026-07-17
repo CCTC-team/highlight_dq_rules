@@ -42,11 +42,11 @@ concurrency:
 env:
   REGISTRY: ghcr.io
   EM_NAME: "highlight_dq_rules"
-  EM_VERSION: "v1.0.1"
+  EM_VERSION: "v1.1.0"
   # Module directory name REDCap discovers it by (<prefix>_v<version>). Also the
   # runner's EM_MODULE: it copies this dir's automated_tests out of the container
   # and runs only its E.124.* specs.
-  EM_MODULE: "highlight_dq_rules_v1.0.1"
+  EM_MODULE: "highlight_dq_rules_v1.1.0"
   REDCAP_CONTAINER: CCTC_REDCap_Docker
   AIO_IMAGE: ghcr.io/cctc-team/cctc_redcap_docker/redcap-aio:latest
   RUNNER_IMAGE: ghcr.io/cctc-team/redcap_cypress/cypress-runner-aio:latest

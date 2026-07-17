@@ -8,19 +8,19 @@ Scenario: E.124.500 - Hide this module from non-admins in the list of enabled mo
     When I click on the link labeled "Control Center"
     When I click on the link labeled "Manage"
     Then I should see "External Modules - Module Manager"
-    And I should NOT see "Highlight DQ Rules - v1.0.1"
+    And I should NOT see "Highlight DQ Rules - v1.1.0"
     When I click on the button labeled "Enable a module"
     And I wait for 2 seconds
     Then I should see "Available Modules"
     And I click on the button labeled "Enable" in the row labeled "Highlight DQ Rules"
     And I wait for 1 second
     And I click on the button labeled "Enable"
-    Then I should see "Highlight DQ Rules - v1.0.1"
+    Then I should see "Highlight DQ Rules - v1.1.0"
     
     When I click on the button labeled "Configure"
     And I check the checkbox labeled "Hide this module from non-admins in the list of enabled modules on each project"
     And I click on the button labeled "Save"
-    Then I should see "Highlight DQ Rules - v1.0.1"
+    Then I should see "Highlight DQ Rules - v1.1.0"
   
     When I create a new project named "E.124.500" by clicking on "New Project" in the menu bar, selecting "Practice / Just for fun" from the dropdown, choosing file "fixtures/cdisc_files/Project_redcap_val_nodata.xml", and clicking the "Create Project" button
     
@@ -28,8 +28,8 @@ Scenario: E.124.500 - Hide this module from non-admins in the list of enabled mo
     And I click on the link labeled "Manage"
     Then I should see "External Modules - Project Module Manager"
     When I click on the button labeled "Enable a module"
-    And I click on the button labeled "Enable" in the row labeled "Highlight DQ Rules - v1.0.1"
-    Then I should see "Highlight DQ Rules - v1.0.1"
+    And I click on the button labeled "Enable" in the row labeled "Highlight DQ Rules - v1.1.0"
+    Then I should see "Highlight DQ Rules - v1.1.0"
 
     # Add User Test_User1 with Project Setup & Design User Rights
     When I click on the link labeled "User Rights"
@@ -45,18 +45,18 @@ Scenario: E.124.500 - Hide this module from non-admins in the list of enabled mo
     And I click on the link labeled "E.124.500"
     And I click on the link labeled "Manage"
     Then I should see "External Modules - Project Module Manager"
-    And I should NOT see "Highlight DQ Rules - v1.0.1"
+    And I should NOT see "Highlight DQ Rules - v1.1.0"
     And I logout
 
     # Disable 'Hide this module from non-admins in the list of enabled modules on each project'
     Given I login to REDCap with the user "Test_Admin"
     When I click on the link labeled "Control Center"
     And I click on the link labeled "Manage"
-    Then I should see "Highlight DQ Rules - v1.0.1"
+    Then I should see "Highlight DQ Rules - v1.1.0"
     When I click on the button labeled "Configure"
     And I uncheck the checkbox labeled "Hide this module from non-admins in the list of enabled modules on each project"
     And I click on the button labeled "Save"
-    Then I should see "Highlight DQ Rules - v1.0.1"
+    Then I should see "Highlight DQ Rules - v1.1.0"
     And I logout
 
     Given I login to REDCap with the user "Test_User1"
@@ -64,7 +64,7 @@ Scenario: E.124.500 - Hide this module from non-admins in the list of enabled mo
     And I click on the link labeled "E.124.500"
     And I click on the link labeled "Manage"
     Then I should see "External Modules - Project Module Manager"
-    And I should see "Highlight DQ Rules - v1.0.1"
+    And I should see "Highlight DQ Rules - v1.1.0"
     And I logout
 
     # Enable from project - 'Hide this module from non-admins in the list of enabled modules on each project'
@@ -73,12 +73,12 @@ Scenario: E.124.500 - Hide this module from non-admins in the list of enabled mo
     And I click on the link labeled "E.124.500"
     And I click on the link labeled "Manage"
     Then I should see "External Modules - Project Module Manager"
-    Then I should see "Highlight DQ Rules - v1.0.1"
+    Then I should see "Highlight DQ Rules - v1.1.0"
     When I click on the button labeled "Configure"
     And I check the checkbox labeled "Hide this module from non-admins in the list of enabled modules on this project"
     And I select "DataManager" on the dropdown field labeled "1. A role that can view the highlight DQ rule errors"
     And I click on the button labeled "Save"
-    Then I should see "Highlight DQ Rules - v1.0.1"
+    Then I should see "Highlight DQ Rules - v1.1.0"
     And I logout
 
     Given I login to REDCap with the user "Test_User1"
@@ -86,7 +86,7 @@ Scenario: E.124.500 - Hide this module from non-admins in the list of enabled mo
     And I click on the link labeled "E.124.500"
     And I click on the link labeled "Manage"
     Then I should see "External Modules - Project Module Manager"
-    And I should NOT see "Highlight DQ Rules - v1.0.1"
+    And I should NOT see "Highlight DQ Rules - v1.1.0"
     And I logout
 
     # Disable external module in Control Center
@@ -96,7 +96,7 @@ Scenario: E.124.500 - Hide this module from non-admins in the list of enabled mo
     And I click on the button labeled "Disable"
     Then I should see "Disable module?"
     When I click on the button labeled "Disable module"
-    Then I should NOT see "Highlight DQ Rules - v1.0.1"
+    Then I should NOT see "Highlight DQ Rules - v1.1.0"
     And I logout
 
     # Verify no exceptions are thrown in the system

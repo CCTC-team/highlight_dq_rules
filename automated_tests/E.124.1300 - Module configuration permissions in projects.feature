@@ -8,19 +8,19 @@ Scenario: E.124.1300 - Module configuration permissions in projects
     When I click on the link labeled "Control Center"
     When I click on the link labeled "Manage"
     Then I should see "External Modules - Module Manager"
-    And I should NOT see "Highlight DQ Rules - v1.0.1"
+    And I should NOT see "Highlight DQ Rules - v1.1.0"
     When I click on the button labeled "Enable a module"
     And I wait for 2 seconds
     Then I should see "Available Modules"
     And I click on the button labeled "Enable" in the row labeled "Highlight DQ Rules"
     And I wait for 1 second
     And I click on the button labeled "Enable"
-    Then I should see "Highlight DQ Rules - v1.0.1"
+    Then I should see "Highlight DQ Rules - v1.1.0"
     
     When I click on the button labeled "Configure"
     Then I should see the dropdown field labeled "Module configuration permissions in projects" with the option "Require Project Setup/Design privilege" selected
     And I click on the button labeled "Save"
-    Then I should see "Highlight DQ Rules - v1.0.1"
+    Then I should see "Highlight DQ Rules - v1.1.0"
 
     When I create a new project named "E.124.1300" by clicking on "New Project" in the menu bar, selecting "Practice / Just for fun" from the dropdown, choosing file "fixtures/cdisc_files/Project_redcap_val_nodata.xml", and clicking the "Create Project" button
 
@@ -28,8 +28,8 @@ Scenario: E.124.1300 - Module configuration permissions in projects
     And I click on the link labeled "Manage"
     Then I should see "External Modules - Project Module Manager"
     When I click on the button labeled "Enable a module"
-    And I click on the button labeled "Enable" in the row labeled "Highlight DQ Rules - v1.0.1"
-    Then I should see "Highlight DQ Rules - v1.0.1"
+    And I click on the button labeled "Enable" in the row labeled "Highlight DQ Rules - v1.1.0"
+    Then I should see "Highlight DQ Rules - v1.1.0"
 
     #VERIFY
     When I click on the link labeled "User Rights"
@@ -44,11 +44,11 @@ Scenario: E.124.1300 - Module configuration permissions in projects
     When I click on the link labeled "Control Center"
     And I click on the link labeled "Manage"
     Then I should see "External Modules - Module Manager"
-    And I should see "Highlight DQ Rules - v1.0.1"
+    And I should see "Highlight DQ Rules - v1.1.0"
     When I click on the button labeled "Configure"
     And I select "Require module-specific user privilege" on the dropdown field labeled "Module configuration permissions in projects"
     And I click on the button labeled "Save"
-    Then I should see "Highlight DQ Rules - v1.0.1"
+    Then I should see "Highlight DQ Rules - v1.1.0"
 
     When I click on the link labeled "My Projects"
     And I click on the link labeled "E.124.1300"
@@ -66,7 +66,7 @@ Scenario: E.124.1300 - Module configuration permissions in projects
 Scenario: E.124.600 - View Usage of the external module
     When I click on the link labeled "Control Center"
     And I click on the link labeled "Manage"
-    Then I should see "Highlight DQ Rules - v1.0.1"
+    Then I should see "Highlight DQ Rules - v1.1.0"
     When I click on the button labeled "View Usage"
     And I should see a link labeled "E.124.1300"
     When I click on the link labeled "E.124.1300"
@@ -79,7 +79,7 @@ Scenario: E.124.600 - View Usage of the external module
     And I click on the button labeled "Disable"
     Then I should see "Disable module?"
     When I click on the button labeled "Disable module"
-    Then I should NOT see "Highlight DQ Rules - v1.0.1"
+    Then I should NOT see "Highlight DQ Rules - v1.1.0"
     And I logout
 
     # Verify no exceptions are thrown in the system
