@@ -16,20 +16,20 @@ Scenario: E.124.300 - Make module discoverable by users
 
     When I click on the link labeled "Manage"
     Then I should see "External Modules - Module Manager"
-    And I should NOT see "Highlight DQ Rules - v1.1.0"
+    And I should NOT see "Highlight DQ Rules - v1.1.1"
     When I click on the button labeled "Enable a module"
     And I wait for 2 seconds
     Then I should see "Available Modules"
     And I click on the button labeled "Enable" in the row labeled "Highlight DQ Rules"
     And I wait for 1 second
     And I click on the button labeled "Enable"
-    Then I should see "Highlight DQ Rules - v1.1.0"
+    Then I should see "Highlight DQ Rules - v1.1.1"
     And I should NOT see "Discoverable"
     
     When I click on the button labeled "Configure"
     And I check the checkbox labeled "Make module discoverable by users"
     And I click on the button labeled "Save"
-    Then I should see "Highlight DQ Rules - v1.1.0"
+    Then I should see "Highlight DQ Rules - v1.1.1"
     And I should see "Discoverable"
     And I logout
     
@@ -37,19 +37,19 @@ Scenario: E.124.300 - Make module discoverable by users
     When I create a new project named "E.124.300" by clicking on "New Project" in the menu bar, selecting "Practice / Just for fun" from the dropdown, choosing file "fixtures/cdisc_files/Project_redcap_val_nodata.xml", and clicking the "Create Project" button
     And I click on the link labeled "Manage"
     Then I should see "External Modules - Project Module Manager"
-    And I should NOT see "Highlight DQ Rules - v1.1.0"
+    And I should NOT see "Highlight DQ Rules - v1.1.1"
 
     When I click on the button labeled "View available modules"
-    Then I should see "Highlight DQ Rules - v1.1.0"
+    Then I should see "Highlight DQ Rules - v1.1.1"
     And I should see "Discoverable"
     And I should NOT see "Activation request is pending"
     When I click on the button labeled "Request Activation" in the row labeled "Highlight DQ Rules"
     # Then I should see "SUCCESS"
     # And I click on the button labeled "Close"
-    And I should NOT see "Highlight DQ Rules - v1.1.0"
+    And I should NOT see "Highlight DQ Rules - v1.1.1"
 
     When I click on the button labeled "View available modules"
-    Then I should see "Highlight DQ Rules - v1.1.0"
+    Then I should see "Highlight DQ Rules - v1.1.1"
     And I should see "Discoverable"
     And I should see "Activation request is pending"
     And I logout
@@ -76,7 +76,7 @@ Scenario: E.124.300 - Make module discoverable by users
     # And I click on the link labeled "E.124.300"
     # And I click on the link labeled "Manage"
     # Then I should see "External Modules - Project Module Manager"
-    # And I should see "Highlight DQ Rules - v1.1.0"
+    # And I should see "Highlight DQ Rules - v1.1.1"
     # And I should see "Discoverable"
     # # And I logout
 
@@ -87,7 +87,7 @@ Scenario: E.124.300 - Make module discoverable by users
     # And I click on the button labeled "Disable"
     # Then I should see "Disable module?"
     # When I click on the button labeled "Disable module"
-    # Then I should NOT see "Highlight DQ Rules - v1.1.0"
+    # Then I should NOT see "Highlight DQ Rules - v1.1.1"
     # And I logout
 
     # # Verify no exceptions are thrown in the system

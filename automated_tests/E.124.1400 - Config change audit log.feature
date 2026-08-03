@@ -9,22 +9,22 @@ Feature: E.124.1400 - The system shall record configuration changes for the High
     When I click on the link labeled "Control Center"
     And I click on the link labeled "Manage"
     Then I should see "External Modules - Module Manager"
-    And I should NOT see "Highlight DQ Rules - v1.1.0"
+    And I should NOT see "Highlight DQ Rules - v1.1.1"
     When I click on the button labeled "Enable a module"
     And I wait for 2 seconds
     Then I should see "Available Modules"
     And I click on the button labeled "Enable" in the row labeled "Highlight DQ Rules"
     And I wait for 1 second
     And I click on the button labeled "Enable"
-    Then I should see "Highlight DQ Rules - v1.1.0"
+    Then I should see "Highlight DQ Rules - v1.1.1"
 
   Scenario: First configuration save logs the initial values
     Given I create a new project named "E.124.1400" by clicking on "New Project" in the menu bar, selecting "Practice / Just for fun" from the dropdown, choosing file "fixtures/cdisc_files/Project_redcap_val_nodata.xml", and clicking the "Create Project" button
     And I click on the link labeled "Manage"
     Then I should see "External Modules - Project Module Manager"
     When I click on the button labeled "Enable a module"
-    And I click on the button labeled "Enable" in the row labeled "Highlight DQ Rules - v1.1.0"
-    Then I should see "Highlight DQ Rules - v1.1.0"
+    And I click on the button labeled "Enable" in the row labeled "Highlight DQ Rules - v1.1.1"
+    Then I should see "Highlight DQ Rules - v1.1.1"
 
     # First save has no prior snapshot, so each setting the admin actually sets is
     # logged as (empty) -> value. Blank settings stay empty and are not logged.
@@ -38,7 +38,7 @@ Feature: E.124.1400 - The system shall record configuration changes for the High
     And I select "DataEntry" on the dropdown field labeled "2. A role that can view the highlight DQ rule errors"
     And I check the checkbox labeled "When checked, shows the data quality rule error in line with the question"
     Then I click on the button labeled "Save"
-    And I should see "Highlight DQ Rules - v1.1.0"
+    And I should see "Highlight DQ Rules - v1.1.1"
 
     #VERIFY - the audit trail on the module's own View Logs page
     When I click on the link labeled "View Logs"
@@ -81,7 +81,7 @@ Feature: E.124.1400 - The system shall record configuration changes for the High
     And I click on the link labeled "E.124.1400"
     And I click on the link labeled "Manage"
     Then I should see "External Modules - Project Module Manager"
-    And I should see "Highlight DQ Rules - v1.1.0"
+    And I should see "Highlight DQ Rules - v1.1.1"
 
     # Turn the inline-highlight checkbox back off. This is a genuine 1 -> (empty)
     # transition, proving the snapshot/diff works across saves (not just first save)
@@ -90,7 +90,7 @@ Feature: E.124.1400 - The system shall record configuration changes for the High
     Then I should see "Configure Module"
     And I uncheck the checkbox labeled "When checked, shows the data quality rule error in line with the question"
     Then I click on the button labeled "Save"
-    And I should see "Highlight DQ Rules - v1.1.0"
+    And I should see "Highlight DQ Rules - v1.1.1"
 
     #VERIFY - the audit trail on the module's own View Logs page
     When I click on the link labeled "View Logs"
@@ -118,7 +118,7 @@ Feature: E.124.1400 - The system shall record configuration changes for the High
     And I click on the button labeled "Disable"
     Then I should see "Disable module?"
     When I click on the button labeled "Disable module"
-    Then I should NOT see "Highlight DQ Rules - v1.1.0"
+    Then I should NOT see "Highlight DQ Rules - v1.1.1"
 
     # Verify no exceptions are thrown in the system
     Given I open Email

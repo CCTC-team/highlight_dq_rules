@@ -341,7 +341,17 @@ class HighlightDQRulesModule extends AbstractExternalModule
     {
         if ($v === null || $v === false) return '';
         if ($v === true) return '1';
-        if (is_array($v)) return json_encode($v);
+        if (is_array($v)) {
+            // A repeatable setting the admin never filled comes back as an array
+            // of empty entries (e.g. [null]), not as null. Treat that as unset,
+            // otherwise the first save logs a phantom "(empty) -> [null]" change
+            // for every blank repeatable.
+            foreach ($v as $entry) {
+                $hasValue = is_array($entry) ? !empty($entry) : trim((string) ($entry ?? '')) !== '';
+                if ($hasValue) return json_encode($v);
+            }
+            return '';
+        }
         return trim((string) $v);
     }
 }
