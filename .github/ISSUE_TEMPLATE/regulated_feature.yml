@@ -1,0 +1,41 @@
+name: Regulated feature (V&V)
+description: A user requirement / feature for a GxP-regulated build. Captures the URS and feature tests for ICH E6 (R3) traceability.
+title: "[Feature]: "
+labels: ["regulated", "validation"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Use this template for any feature in a GxP-regulated software product.
+        One card = one User Requirement.
+
+        The structured V&V data for this feature — **Risk ID**, **Requirement
+        ID**, **Critical-to-Quality**, **Test Type**, the **Acceptance** and
+        **QA** approvers, their sign-off dates, and any **Deviation Ref** — is
+        recorded in the **project board panel** for this card, not in this issue
+        body. The panel is the canonical source; the enforcement engine reads it
+        by field name. Set those fields on the card, not here.
+
+        The **URS** (`.spec`) and the **feature tests** (`.feature`) that prove
+        this requirement are recorded in the repo's **requirement manifest**
+        (`requirements/<Requirement ID>/manifest.yml`), keyed by the **Requirement
+        ID** you set on the card. The developer who writes those files names them
+        in the manifest in the **same pull request** — so they are
+        version-controlled and reviewed alongside the code. Do not paste URS or
+        feature URLs here.
+
+        (Repos that have not yet adopted requirement bundles record the same URS +
+        feature paths in the `.compliance.yml` `traceability` block instead, keyed
+        by the same Requirement ID. The enforcement engine reads the manifest
+        first and falls back to that block, so either is valid during the
+        transition.)
+
+        This issue body holds only the plain-English description.
+
+  - type: textarea
+    id: description
+    attributes:
+      label: "Brief description:"
+      description: Plain-English description of the feature being validated.
+    validations:
+      required: true

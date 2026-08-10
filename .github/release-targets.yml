@@ -1,0 +1,192 @@
+# yaml-language-server: $schema=./release-targets.schema.json
+#
+# Release targets manifest for this repository.
+# Canonical schema:   CCTC-team/compliance-engine/release-targets.schema.json
+# Target contract:     claude-org/rules/guides/build-and-release.md
+#
+# This file binds the canonical, tool-agnostic build targets to THIS repo's
+# actual build commands. The org release workflow reads it and runs the
+# commands verbatim — it hardcodes none of your paths or tools.
+#
+# ⚠️ EVERY VALUE BELOW IS A WORKED EXAMPLE for a hosted Blazor + API app
+#    (TrialView → a GHCR container image). It is NOT a default. Replace each
+#    `run:` with the command your own build uses and delete targets that do
+#    not apply. Auto-stubbed by compliance-drift; review every TODO first.
+
+# Informational only — the commands below are what actually bind.
+build_tool: FAKE   # TODO: your build tool (FAKE / MSBuild / Cake / npm / Make)
+
+# The env var your `version` and `package` targets honour to build the exact
+# version a tag names, instead of self-computing one.
+version_pin_env: TRIALVIEW_BUILD_VERSION   # TODO: your build's version-pin env var
+
+# Hosted apps only: the container image(s) this repo ships, keyed by component.
+# TrialView is TWO images — the Blazor host and the F# API — each built, pushed,
+# attested, and pinned independently (one process per container). A repo with a
+# single image declares one entry here; delete the whole block if your
+# distributable is a package (nupkg/zip) rather than a container image.
+images:
+  trialview:                                  # TODO: your component name (the compose service)
+    registry: ghcr.io                         # TODO: your registry host
+    repository: cctc-team/trialview           # TODO: your image repository path
+    digest_env: TRIALVIEW_IMAGE_DIGEST        # TODO: env var your push writes THIS image's digest into
+    sbom:
+      - "artifacts/trialview.cdx.json"        # TODO: this image's SBOM path
+  trialview-api:                              # TODO: second component
+    registry: ghcr.io                         # TODO
+    repository: cctc-team/trialview-api       # TODO
+    digest_env: TRIALVIEW_API_IMAGE_DIGEST    # TODO: a SEPARATE digest env var per image
+    sbom:
+      - "artifacts/trialview-api.cdx.json"    # TODO: this image's SBOM path
+
+# Each target maps a canonical name to the command this repo runs and,
+# optionally, globs for the files it produces (so the workflow can collect
+# them). Only the canonical target names are allowed as keys.
+targets:
+  clean:
+    run: dotnet run --project ./build/build.fsproj -- --target Clean   # TODO
+
+  restore:
+    run: dotnet restore   # TODO
+
+  build:
+    run: dotnet run --project ./build/build.fsproj -- --target Build   # TODO: must compile in Release
+
+  test:
+    run: dotnet run --project ./build/build.fsproj -- --target Test   # TODO
+    outputs:
+      - "**/TestResults/*.trx"   # TODO: where your test results land
+
+  docs:
+    run: dotnet run --project ./build/build.fsproj -- --target Docs   # TODO
+
+  version:
+    run: dotnet run --project ./build/build.fsproj -- --target Version   # TODO: must honour version_pin_env
+
+  package:
+    # Build the OCI image in CI (NOT on the server). The image is what
+    # provenance attests.
+    run: dotnet run --project ./build/build.fsproj -- --target Package   # TODO
+
+  publish:registry:
+    # Push EACH image to GHCR by digest. IMPORTANT: this target must export the
+    # pushed sha256 digest of EACH image to $GITHUB_ENV under that image's
+    # images.<name>.digest_env, e.g.:
+    #   echo "TRIALVIEW_IMAGE_DIGEST=sha256:$(...)" >> "$GITHUB_ENV"
+    #   echo "TRIALVIEW_API_IMAGE_DIGEST=sha256:$(...)" >> "$GITHUB_ENV"
+    # The release workflow reads them back to attest and reference each image.
+    run: dotnet run --project ./build/build.fsproj -- --target Publish   # TODO
+
+  deploy:uat:
+    run: dotnet run --project ./build/build.fsproj -- --target "Deploy to UAT"   # TODO (agent-run)
+
+  verify:uat:
+    run: dotnet run --project ./build/build.fsproj -- --target "Verify UAT boot"   # TODO (agent-run)
+
+  functional-tests:
+    run: dotnet run --project ./build/build.fsproj -- --target "Functional tests"   # TODO
+
+  tag:
+    # MUST create a SIGNED annotated tag (git tag -s), not -a or bare git tag.
+    run: dotnet run --project ./build/build.fsproj -- --target "Tag version in git"   # TODO: ensure -s
+
+  deploy:production:
+    run: dotnet run --project ./build/build.fsproj -- --target "Deploy to Production"   # TODO (agent-run)
+
+  verify:production:
+    run: dotnet run --project ./build/build.fsproj -- --target "Verify production boot"   # TODO (agent-run)
+
+  # --- Regulated-only targets (required for gcp-critical) ---
+
+  validation-docs:
+    # Generate the validation summary (CtQ → URS → V&V → acceptance → QA).
+    run: dotnet run --project ./build/build.fsproj -- --target "Build validation docs"   # TODO
+    outputs:
+      - "docs/validation/validation-report.md"   # TODO: your declared report path
+
+  sbom:
+    # Generate one CycloneDX / SPDX SBOM PER IMAGE, written to the paths each
+    # image declares under images.<name>.sbom above. The workflow attests each
+    # SBOM to its own image digest.
+    run: ./build/sbom-all.sh   # TODO: emit one SBOM per image (e.g. one per Dockerfile/project)
+    outputs:
+      # All per-image SBOMs. NOTE: a multi-image repo MUST give each image its own
+      # `sbom:` glob above (as both components do here) — the workflow attests each
+      # image's own SBOM. This target-level `outputs` glob is only used as a
+      # fallback for a SINGLE-image repo; for >1 image it would be ambiguous.
+      - "artifacts/*.cdx.json"   # TODO
+
+  board-evidence:
+    # Generate the board-derived inspector evidence with getval (v2). It reads
+    # this repo's lifecycle board and emits a report that is a FULL snapshot of
+    # the board's Released bucket (the whole validated app), led by a section
+    # scoping what is new in THIS release by milestone. It is an ADDITIONAL,
+    # mandatory artefact — it does not replace validation-docs or the SBOMs; if
+    # it is empty or fails, the release fails.
+    #
+    # - The board is identified by `vars.LIFECYCLE_PROJECT_NUMBER` (the workflow
+    #   passes it as $LIFECYCLE_PROJECT_NUMBER); a regulated release hard-fails if
+    #   it is unset.
+    # - The board read needs an App token with organization projects:read — the
+    #   workflow exports it as $GH_TOKEN (do NOT rely on the default GITHUB_TOKEN).
+    # - The milestone scoping the "what's new" lead is exported by the workflow
+    #   as $MILESTONE (the release tag unless a milestone input overrides it).
+    run: getval --config config/<repo>_config.json --project-number "$LIFECYCLE_PROJECT_NUMBER" --milestone "$MILESTONE"   # TODO: your getval v2 config path
+    outputs:
+      - "docs/validation/board-evidence-report.md"   # TODO: the report path your getval config writes
+
+  # --- Data & state lifecycle (stores-only) ---
+  # Required ONLY if your app declares persistent stores in `.compliance.yml`
+  # (state_lifecycle.stores). DELETE THIS WHOLE GROUP for a stateless app.
+  # Contract + audit-output shape: docs/data-state-lifecycle-contract.md.
+  #
+  # Each command BRINGS ITS OWN RUNTIME (EF Core, the neo4j-migrations CLI,
+  # topology-as-code) — the contract-runner only sequences these and records the
+  # audit trail; it contains no store tooling. Each verb MUST print a single JSON
+  # object on stdout (see the contract) and exit non-zero on failure.
+  #
+  # ⚠️ ONE STORE ⇒ the plain `state:<verb>` keys below. MORE THAN ONE STORE ⇒ bind
+  # each verb PER STORE instead, as `state:<verb>@<store>`:
+  #
+  #   state:migrate@identity:
+  #     run: docker compose run --rm -T app state:migrate --store identity
+  #   state:migrate@graph:
+  #     run: docker compose run --rm -T app state:migrate --store graph
+  #
+  # ...and likewise for seed / rebuild / verify / baseline-version. A binding is ONE
+  # shell command, so a single `state:migrate` cannot address two stores — the runner
+  # would shell it once per declared store and label one of the runs with the other
+  # store's name. The engine REJECTS the ambiguous form: a multi-store repo that omits
+  # the per-store keys fails to start rather than writing an audit record that lies.
+  state:migrate:
+    # Additive, forward-only migrations across ALL declared stores up to this build.
+    run: dotnet run --project ./build/build.fsproj -- --target "State migrate"   # TODO
+
+  state:seed:
+    # Deterministic synthetic seed — additive, forward-ordered, IDEMPOTENT
+    # (apply only deltas not yet present). A rebuild replays the full set.
+    run: dotnet run --project ./build/build.fsproj -- --target "State seed"   # TODO
+
+  state:rebuild:
+    # Clean rebuild from zero (migrate + seed on EMPTY stores). Destructive —
+    # the runner fails closed unless prod_isolation is attested.
+    run: dotnet run --project ./build/build.fsproj -- --target "State rebuild"   # TODO
+
+  state:verify:
+    # Post-migrate data-health / invariant check (NOT app-boot health — that's
+    # verify:uat). Exit non-zero to trigger rollback.
+    run: dotnet run --project ./build/build.fsproj -- --target "State verify"   # TODO
+
+  state:baseline-version:
+    # Emit the coordinating baseline-version tuple as JSON on stdout — the value
+    # attested as the acceptance data state. See the contract for the exact shape.
+    run: dotnet run --project ./build/build.fsproj -- --target "State baseline-version"   # TODO
+
+  # --- Optional snapshot capability (declare `snapshot` in .compliance.yml to use) ---
+  # Omit both if your stores are rebuild-only (within-cycle state is then lost on
+  # a failed-migration rollback).
+  state:snapshot:
+    run: dotnet run --project ./build/build.fsproj -- --target "State snapshot"   # TODO
+
+  state:restore:
+    run: dotnet run --project ./build/build.fsproj -- --target "State restore"   # TODO
