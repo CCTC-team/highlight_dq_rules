@@ -26,7 +26,7 @@ Feature: E.124.700 - The system shall support the ability to view data quality e
  
   Scenario: Enable external module in project
     Given I create a new project named "E.124.700" by clicking on "New Project" in the menu bar, selecting "Practice / Just for fun" from the dropdown, choosing file "fixtures/cdisc_files/Project_redcap_val_nodata.xml", and clicking the "Create Project" button
-    And I click on the link labeled "Manage"
+    And I click on the second link labeled "Manage"
     Then I should see "External Modules - Project Module Manager"
     When I click on the button labeled "Enable a module"
     And I click on the button labeled "Enable" in the row labeled "Highlight DQ Rules - v1.1.1"
@@ -130,7 +130,7 @@ Feature: E.124.700 - The system shall support the ability to view data quality e
 
     #VERIFY - E.124.900 - Super-users can configure the settings
     Given I login to REDCap with the user "Test_Admin"
-    When I click on the link labeled "Manage"
+    When I click on the second link labeled "Manage"
     And I click on the button labeled "Leave without saving changes"
     Then I should see "External Modules - Project Module Manager"
     And I click on the button labeled "Configure"
@@ -188,7 +188,7 @@ Feature: E.124.700 - The system shall support the ability to view data quality e
 
   Scenario: E.124.900 - non-Super-users cannot configure the Highlight DQ Rules project configurations 
     Given I login to REDCap with the user "Test_User1"
-    When I click on the link labeled "Manage"
+    When I click on the second link labeled "Manage"
     And I click on the button labeled "Leave without saving changes"
     Then I should see "External Modules - Project Module Manager"
     #And I should NOT see the button labeled "Disable"
@@ -235,7 +235,7 @@ Feature: E.124.700 - The system shall support the ability to view data quality e
     Given I login to REDCap with the user "Test_Admin"
     When I click on the link labeled "My Projects"
     And I click on the link labeled "E.124.700"
-    And I click on the link labeled "Manage"
+    And I click on the second link labeled "Manage"
     Then I should see "External Modules - Project Module Manager"
     And I should see "Highlight DQ Rules - v1.1.1"
     When I click on the button labeled "Disable"

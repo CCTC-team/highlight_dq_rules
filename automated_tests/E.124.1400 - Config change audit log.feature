@@ -20,7 +20,7 @@ Feature: E.124.1400 - The system shall record configuration changes for the High
 
   Scenario: First configuration save logs the initial values
     Given I create a new project named "E.124.1400" by clicking on "New Project" in the menu bar, selecting "Practice / Just for fun" from the dropdown, choosing file "fixtures/cdisc_files/Project_redcap_val_nodata.xml", and clicking the "Create Project" button
-    And I click on the link labeled "Manage"
+    And I click on the second link labeled "Manage"
     Then I should see "External Modules - Project Module Manager"
     When I click on the button labeled "Enable a module"
     And I click on the button labeled "Enable" in the row labeled "Highlight DQ Rules - v1.1.1"
@@ -56,8 +56,8 @@ Feature: E.124.1400 - The system shall record configuration changes for the High
     And I should see a table header and row containing the following values in a table:
       | Name      | Value               |
       | setting   | highlight-dq-inline |
-      | old_value | (empty)             |
       | new_value | 1                   |
+      | old_value | (empty)             |
     And I click on the button labeled "Close"
     Then I should see "External Module Logs"
 
@@ -70,8 +70,8 @@ Feature: E.124.1400 - The system shall record configuration changes for the High
     And I should see a table header and row containing the following values in a table:
       | Name      | Value               |
       | setting   | user-roles-can-view |
-      | old_value | (empty)             |
       | new_value | ["2","1"]           |
+      | old_value | (empty)             |
 
   Scenario: Changing a setting logs an old->new audit entry
     # rctf starts each scenario from a clean browser page, so re-navigate to the
@@ -79,7 +79,7 @@ Feature: E.124.1400 - The system shall record configuration changes for the High
     Given I login to REDCap with the user "Test_Admin"
     When I click on the link labeled "My Projects"
     And I click on the link labeled "E.124.1400"
-    And I click on the link labeled "Manage"
+    And I click on the second link labeled "Manage"
     Then I should see "External Modules - Project Module Manager"
     And I should see "Highlight DQ Rules - v1.1.1"
 
@@ -106,8 +106,8 @@ Feature: E.124.1400 - The system shall record configuration changes for the High
     And I should see a table header and row containing the following values in a table:
       | Name      | Value               |
       | setting   | highlight-dq-inline |
-      | old_value | 1                   |
       | new_value | (empty)             |
+      | old_value | 1                   |
     And I click on the button labeled "Close"
     Then I should see "External Module Logs"
 
