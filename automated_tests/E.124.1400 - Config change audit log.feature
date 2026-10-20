@@ -49,7 +49,11 @@ Feature: E.124.1400 - The system shall record configuration changes for the High
     And I should see a table header and row containing the following values in a table:
       | Name      | Value               |
       | setting   | highlight-dq-inline |
+    And I should see a table header and row containing the following values in a table:
+      | Name      | Value               |
       | new_value | 1                   |
+    And I should see a table header and row containing the following values in a table:
+      | Name      | Value               |
       | old_value | (empty)             |
     And I click on the button labeled "Close"
     Then I should see "External Module Logs"
@@ -63,7 +67,11 @@ Feature: E.124.1400 - The system shall record configuration changes for the High
     And I should see a table header and row containing the following values in a table:
       | Name      | Value               |
       | setting   | user-roles-can-view |
+    And I should see a table header and row containing the following values in a table:
+      | Name      | Value               |
       | new_value | ["2","1"]           |
+    And I should see a table header and row containing the following values in a table:
+      | Name      | Value               |
       | old_value | (empty)             |
 
   Scenario: Changing a setting logs an old->new audit entry
@@ -99,7 +107,11 @@ Feature: E.124.1400 - The system shall record configuration changes for the High
     And I should see a table header and row containing the following values in a table:
       | Name      | Value               |
       | setting   | highlight-dq-inline |
+    And I should see a table header and row containing the following values in a table:
+      | Name      | Value               |
       | new_value | (empty)             |
+    And I should see a table header and row containing the following values in a table:
+      | Name      | Value               |
       | old_value | 1                   |
     And I click on the button labeled "Close"
     Then I should see "External Module Logs"
