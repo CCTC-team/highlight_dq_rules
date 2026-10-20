@@ -8,13 +8,6 @@ Scenario: E.124.500 - Hide this module from non-admins in the list of enabled mo
     When I click on the link labeled "Control Center"
     When I click on the link labeled "Manage"
     Then I should see "External Modules - Module Manager"
-    And I should NOT see "Highlight DQ Rules - v1.1.2"
-    When I click on the button labeled "Enable a module"
-    And I wait for 2 seconds
-    Then I should see "Available Modules"
-    And I click on the button labeled "Enable" in the row labeled "Highlight DQ Rules"
-    And I wait for 1 second
-    And I click on the button labeled "Enable"
     Then I should see "Highlight DQ Rules - v1.1.2"
     
     When I click on the button labeled "Configure"

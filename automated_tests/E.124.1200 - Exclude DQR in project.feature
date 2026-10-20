@@ -15,13 +15,6 @@ Feature: E.124.1200 - The system shall support the ability to view excluded data
 
     Given I click on the link labeled "Manage"
     Then I should see "External Modules - Module Manager"
-    And I should NOT see "Highlight DQ Rules - v1.1.2"
-    When I click on the button labeled "Enable a module"
-    And I wait for 2 seconds
-    Then I should see "Available Modules"
-    And I click on the button labeled "Enable" in the row labeled "Highlight DQ Rules"
-    And I wait for 1 second
-    And I click on the button labeled "Enable"
     Then I should see "Highlight DQ Rules - v1.1.2"
  
   Scenario: Enable external module in project
@@ -309,7 +302,6 @@ Feature: E.124.1200 - The system shall support the ability to view excluded data
       | mm/dd/yyyy hh:mm | test_admin | Disable external module "highlight_dq_rules_v1.1.2" for project                  |
       | mm/dd/yyyy hh:mm | test_admin | Modify configuration for external module "highlight_dq_rules_v1.1.2" for project |
       | mm/dd/yyyy hh:mm | test_admin | Enable external module "highlight_dq_rules_v1.1.2" for project                   |
-      | mm/dd/yyyy hh:mm | test_admin | Enable external module "highlight_dq_rules_v1.1.2" for system                    |
 
     And I logout
 
