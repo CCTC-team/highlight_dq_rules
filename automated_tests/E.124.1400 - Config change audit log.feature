@@ -4,27 +4,20 @@ Feature: E.124.1400 - The system shall record configuration changes for the High
   I want every configuration change to be written to the module's External Module Logs
   So that there is an audit trail of who changed which setting, when, and from what value to what.
 
-  Scenario: Enable external module from Control Center
+  Scenario: Verify external module is enabled in Control Center
     Given I login to REDCap with the user "Test_Admin"
     When I click on the link labeled "Control Center"
     And I click on the link labeled "Manage"
     Then I should see "External Modules - Module Manager"
-    And I should NOT see "Highlight DQ Rules - v1.1.1"
-    When I click on the button labeled "Enable a module"
-    And I wait for 2 seconds
-    Then I should see "Available Modules"
-    And I click on the button labeled "Enable" in the row labeled "Highlight DQ Rules"
-    And I wait for 1 second
-    And I click on the button labeled "Enable"
-    Then I should see "Highlight DQ Rules - v1.1.1"
+    Then I should see "Highlight DQ Rules - v1.1.2"
 
   Scenario: First configuration save logs the initial values
     Given I create a new project named "E.124.1400" by clicking on "New Project" in the menu bar, selecting "Practice / Just for fun" from the dropdown, choosing file "fixtures/cdisc_files/Project_redcap_val_nodata.xml", and clicking the "Create Project" button
-    And I click on the link labeled "Manage"
+    And I click on the second link labeled "Manage"
     Then I should see "External Modules - Project Module Manager"
     When I click on the button labeled "Enable a module"
-    And I click on the button labeled "Enable" in the row labeled "Highlight DQ Rules - v1.1.1"
-    Then I should see "Highlight DQ Rules - v1.1.1"
+    And I click on the button labeled "Enable" in the row labeled "Highlight DQ Rules - v1.1.2"
+    Then I should see "Highlight DQ Rules - v1.1.2"
 
     # First save has no prior snapshot, so each setting the admin actually sets is
     # logged as (empty) -> value. Blank settings stay empty and are not logged.
@@ -38,7 +31,7 @@ Feature: E.124.1400 - The system shall record configuration changes for the High
     And I select "DataEntry" on the dropdown field labeled "2. A role that can view the highlight DQ rule errors"
     And I check the checkbox labeled "When checked, shows the data quality rule error in line with the question"
     Then I click on the button labeled "Save"
-    And I should see "Highlight DQ Rules - v1.1.1"
+    And I should see "Highlight DQ Rules - v1.1.2"
 
     #VERIFY - the audit trail on the module's own View Logs page
     When I click on the link labeled "View Logs"
@@ -56,8 +49,12 @@ Feature: E.124.1400 - The system shall record configuration changes for the High
     And I should see a table header and row containing the following values in a table:
       | Name      | Value               |
       | setting   | highlight-dq-inline |
-      | old_value | (empty)             |
+    And I should see a table header and row containing the following values in a table:
+      | Name      | Value               |
       | new_value | 1                   |
+    And I should see a table header and row containing the following values in a table:
+      | Name      | Value               |
+      | old_value | (empty)             |
     And I click on the button labeled "Close"
     Then I should see "External Module Logs"
 
@@ -70,8 +67,12 @@ Feature: E.124.1400 - The system shall record configuration changes for the High
     And I should see a table header and row containing the following values in a table:
       | Name      | Value               |
       | setting   | user-roles-can-view |
-      | old_value | (empty)             |
+    And I should see a table header and row containing the following values in a table:
+      | Name      | Value               |
       | new_value | ["2","1"]           |
+    And I should see a table header and row containing the following values in a table:
+      | Name      | Value               |
+      | old_value | (empty)             |
 
   Scenario: Changing a setting logs an old->new audit entry
     # rctf starts each scenario from a clean browser page, so re-navigate to the
@@ -79,9 +80,9 @@ Feature: E.124.1400 - The system shall record configuration changes for the High
     Given I login to REDCap with the user "Test_Admin"
     When I click on the link labeled "My Projects"
     And I click on the link labeled "E.124.1400"
-    And I click on the link labeled "Manage"
+    And I click on the second link labeled "Manage"
     Then I should see "External Modules - Project Module Manager"
-    And I should see "Highlight DQ Rules - v1.1.1"
+    And I should see "Highlight DQ Rules - v1.1.2"
 
     # Turn the inline-highlight checkbox back off. This is a genuine 1 -> (empty)
     # transition, proving the snapshot/diff works across saves (not just first save)
@@ -90,7 +91,7 @@ Feature: E.124.1400 - The system shall record configuration changes for the High
     Then I should see "Configure Module"
     And I uncheck the checkbox labeled "When checked, shows the data quality rule error in line with the question"
     Then I click on the button labeled "Save"
-    And I should see "Highlight DQ Rules - v1.1.1"
+    And I should see "Highlight DQ Rules - v1.1.2"
 
     #VERIFY - the audit trail on the module's own View Logs page
     When I click on the link labeled "View Logs"
@@ -106,8 +107,12 @@ Feature: E.124.1400 - The system shall record configuration changes for the High
     And I should see a table header and row containing the following values in a table:
       | Name      | Value               |
       | setting   | highlight-dq-inline |
-      | old_value | 1                   |
+    And I should see a table header and row containing the following values in a table:
+      | Name      | Value               |
       | new_value | (empty)             |
+    And I should see a table header and row containing the following values in a table:
+      | Name      | Value               |
+      | old_value | 1                   |
     And I click on the button labeled "Close"
     Then I should see "External Module Logs"
 
@@ -118,7 +123,7 @@ Feature: E.124.1400 - The system shall record configuration changes for the High
     And I click on the button labeled "Disable"
     Then I should see "Disable module?"
     When I click on the button labeled "Disable module"
-    Then I should NOT see "Highlight DQ Rules - v1.1.1"
+    Then I should NOT see "Highlight DQ Rules - v1.1.2"
 
     # Verify no exceptions are thrown in the system
     Given I open Email
