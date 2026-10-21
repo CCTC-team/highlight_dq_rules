@@ -209,6 +209,7 @@ Feature: E.124.700 - The system shall support the ability to view data quality e
     #VERIFY - E.124.700 - DataEntry cannot view DQR
     Given I login to REDCap with the user "Test_User4"
     When I click on the link labeled "My Projects"
+    And I click on the button labeled "Leave without saving changes"
     And I click on the link labeled "E.124.700"
   
     Given I click on the link labeled "Record Status Dashboard"
@@ -227,6 +228,7 @@ Feature: E.124.700 - The system shall support the ability to view data quality e
     # Disable external module in project
     Given I login to REDCap with the user "Test_Admin"
     When I click on the link labeled "My Projects"
+    And I click on the button labeled "Leave without saving changes"
     And I click on the link labeled "E.124.700"
     And I click on the second link labeled "Manage"
     Then I should see "External Modules - Project Module Manager"
