@@ -4,13 +4,16 @@
 
 The **Highlight DQ Rules** external module displays Data Quality (DQ) rule violations directly on data entry forms in REDCap. This allows data managers and authorized users to identify data issues immediately while reviewing records, without needing to navigate to the Data Quality page.
 
-## Compatibility
+## Tested With
 
-| Requirement | Version |
-|-------------|---------|
-| PHP | 8.0.27 - 8.2.29 |
-| REDCap | 13.8.1 - 15.9.1 |
-| Framework | Version 14 |
+The module has been tested with:
+
+| | Versions |
+|---|---|
+| PHP | 8.2 |
+| REDCap | 13.8.1, 14.7.0, 15.5.36, 17.5.6 |
+
+The module uses External Module Framework version 14. `config.json` sets no PHP or REDCap version limits.
 
 ## Features
 
@@ -28,7 +31,7 @@ The **Highlight DQ Rules** external module displays Data Quality (DQ) rule viola
 | File | Purpose |
 |------|---------|
 | `HighlightDQRulesModule.php` | Main module class - handles DQ rule detection, role validation, and HTML rendering |
-| `config.json` | Module configuration including settings, metadata, and compatibility |
+| `config.json` | Module configuration including settings and metadata |
 | `js/highlight.js` | Client-side JavaScript for inline field highlighting and icon management |
 | `css/styles.css` | Styling for error and exclusion tables and inline error banners |
 
