@@ -100,7 +100,7 @@ Feature: E.124.1200 - The system shall support the ability to view excluded data
       | Rule # | Rule Name              | Rule Logic                                                  | Total Discrepancies |
       | 1      | Identifier more than 8 | [identifier] > 8                                            | 5                   |
       | 2      | Name not Name1         | [ptname] != 'Name1'                                         | 8                   |
-      | 3      | Names are different    | [event_2_arm_1][ptname_v2_v2] != [event_2_arm_1][ptname]    | 1                   |
+      | 3      | Names are different    | [event_2_arm_1][ptname_v2_v2] != [event_2_arm_1][ptname]    | 0                   |
 
     When I click on the link labeled "Record Status Dashboard"
     Then I should see "Record Status Dashboard (all records)"
@@ -178,7 +178,7 @@ Feature: E.124.1200 - The system shall support the ability to view excluded data
       | Rule # | Rule Name              | Rule Logic                                                  | Total Discrepancies |
       | 1      | Identifier more than 8 | [identifier] > 8                                            | 5                   |
       | 2      | Name not Name1         | [ptname] != 'Name1'                                         | 8                   |
-      | 3      | Names are different    | [event_2_arm_1][ptname_v2_v2] != [event_2_arm_1][ptname]    | 1                   |
+      | 3      | Names are different    | [event_2_arm_1][ptname_v2_v2] != [event_2_arm_1][ptname]    | 0                   |
 
     When I click on the link labeled "view" in the row labeled "3"
     Then I should see "Rule #3: Names are different"
@@ -243,7 +243,7 @@ Feature: E.124.1200 - The system shall support the ability to view excluded data
       | Rule # | Rule Name              | Rule Logic                                                  | Total Discrepancies |
       | 1      | Identifier more than 8 | [identifier] > 8                                            | 5                   |
       | 2      | Name not Name1         | [ptname] != 'Name1'                                         | 8                   |
-      | 3      | Names are different    | [event_2_arm_1][ptname_v2_v2] != [event_2_arm_1][ptname]    | 1                   |
+      | 3      | Names are different    | [event_2_arm_1][ptname_v2_v2] != [event_2_arm_1][ptname]    | 0                   |
 
     When I click on the link labeled "Record Status Dashboard"
     Then I should see "Record Status Dashboard (all records)"
