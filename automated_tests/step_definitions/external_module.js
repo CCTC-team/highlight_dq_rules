@@ -1,6 +1,16 @@
 //Add any of your own step definitions here
 const { Given, defineParameterType } = require('@badeball/cypress-cucumber-preprocessor')
 
+defineParameterType({
+    name: 'dqrTable',
+    regexp: /Data quality error table|Data quality exclusion table/
+})
+
+const dqrTable = {
+    'Data quality error table' : '#form-instance-rule-errors',
+    'Data quality exclusion table' : '#form-instance-rule-exclusions'
+}
+
 
 /**
  * @module HightlightDQR
